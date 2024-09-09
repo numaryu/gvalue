@@ -1,7 +1,9 @@
 # G Value calculation program
 
 Ionization and singlet and triplet excitations.
-Original version is written in Fortran 77. Rewritten in Fortran 2023 by numaryu.
+
+The original version (S. Sato, Radiation Chemistry 14, 2-19 (1979) [in Japanese]) is written in Fortran 77, 
+is rewritten by numaryu into Fortran 2023.
 
 ## References
 1. S. Sato, K. Okazaki, S. Ohno, Bull. Chem. Soc. Jpn, 47, 2174 (1974).
