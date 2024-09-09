@@ -1,0 +1,10 @@
+&orbital_dim
+ norbital = 1
+/
+&orbital_params
+ energy_ionize = 24.581
+ energy_singlet = 21.2
+ energy_triplet = 19.8
+ energy_kinetic = 38.74
+ number_electrons = 0.5380E+20
+/

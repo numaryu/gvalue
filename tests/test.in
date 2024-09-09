@@ -1,0 +1,10 @@
+&param_orbital
+ file_orbital = "helium_nml.in"
+! file_orbital = "water_nml.in"
+/
+
+&grid_param
+ nediv = 40
+ egrid_max = 1.e5
+ egrid_min = 1.e0
+/
