@@ -314,56 +314,53 @@ contains
 
   end function integrate_sigma
 
-  subroutine calculate_degradation(self, gen)
+  subroutine calculate_degradation(self, ngen)
     use mod_constants, only: bb => bb_compat
     use mod_grid, only: egrid
     class(orbital) :: self
-    integer, intent(in) :: gen
+    integer, intent(in) :: ngen
     real :: energy1, denergy1, energy2, denergy2
     real :: energy_ionize, energy_kinetic
     integer :: io
     integer :: i, j
-    integer :: k, mt, ll
+    real :: energy1_max, energy2_max
     integer :: nenergy_max
-    integer :: nenergy1_max
-    real, save :: energy2_max
-    integer, save :: nenergy2_max
+    integer :: nenergy1_max, nenergy2_max
+    integer :: out
     
     nenergy_max = egrid%grid_number(minval(self%energy_triplet))
     
-    if (gen == 1) then
+    if (ngen == 1) then
 
        where(self%stop_power /= 0.)
           self%degradation_gen(1, :) = 1./self%stop_power(:)
        end where
        
-       energy2_max = egrid%val_max
-       nenergy2_max = egrid%grid_number(energy2_max)
-    else if (gen /= 1) then
+    else if (ngen /= 1) then
 
-       self%degradation_gen(gen, :) = 0.
+       self%degradation_gen(ngen, :) = 0.
        
        do io = 1, self%number
           energy_ionize = self%energy_ionize(io)
           energy_kinetic = self%energy_kinetic(io)
-             
-          nenergy1_max = nenergy2_max
-          energy2_max = 0.5*(egrid%val(nenergy2_max+1) - energy_ionize)
-          nenergy2_max = egrid%grid_number(energy2_max)
 
-          write(6,*) nenergy_max, nenergy2_max + 1, nenergy1_max + 1
+          energy1_max = (egrid%val_max - (2**(ngen-2)-1)*energy_ionize)/(2**(ngen-2))
+          if (ngen == 2) energy1_max = egrid%val_max
+          energy2_max = (egrid%val_max - (2**(ngen-1)-1)*energy_ionize)/(2**(ngen-1))
+          nenergy1_max = egrid%grid_number(energy1_max)
+          nenergy2_max = egrid%grid_number(energy2_max)
           
-          ! s(i) = T2
+          ! i: index of T2
           do i = nenergy2_max + 1, nenergy_max
              energy2 = egrid%val(i)
              denergy2 = egrid%val(i-1) - egrid%val(i)
-             ! s(j) = T1 
+             ! j: index of T1
              do j = nenergy1_max + 1, nenergy_max
                 energy1 = egrid%val(j)
                 denergy1 = egrid%val(j-1) - egrid%val(j)
-                if(energy1 > 2.0*energy2 + energy_ionize) then
-                   self%degradation_gen(gen, i) = self%degradation_gen(gen, i) &
-                        + self%number_electrons(io) * self%degradation_gen(gen-1, j) &
+                if (energy1 > 2.0*energy2 + energy_ionize) then
+                   self%degradation_gen(ngen, i) = self%degradation_gen(ngen, i) &
+                        + self%number_electrons(io) * self%degradation_gen(ngen-1, j) &
                         * denergy1 * denergy2 &
                         * bb/(energy1 + energy_ionize + energy_kinetic) * &
                         ( 1.0/(energy2 + energy_ionize)**2 &
@@ -379,14 +376,14 @@ contains
        end do
 
        do i = nenergy1_max + 1, nenergy_max
-          self%degradation_gen(gen, i) = self%degradation_gen(gen, i-1) &
-               + self%degradation_gen(gen,i)
+          self%degradation_gen(ngen, i) = self%degradation_gen(ngen, i-1) &
+               + self%degradation_gen(ngen,i)
        end do
        where (self%stop_power /= 0.)
-          self%degradation_gen(gen, :) = self%degradation_gen(gen, :)/self%stop_power(:)
+          self%degradation_gen(ngen, :) = self%degradation_gen(ngen, :)/self%stop_power(:)
        end where
     end if
-    
+
   end subroutine calculate_degradation
   
 end module class_orbital
