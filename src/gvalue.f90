@@ -68,7 +68,7 @@ program gvalue
         sst=sst+sop(j,i)
      end do
      st(i)=sst
-     diff = diff + abs(st(i)-medium%stop_power_total(i))
+     diff = diff + abs(st(i)-medium%stop_power(i))
   end do
   write(6,*) 'st diff',diff
   

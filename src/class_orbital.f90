@@ -22,8 +22,8 @@ module class_orbital
      real, pointer :: number_triplet(:) => null(), gvalue_triplet(:) => null()
 
      ! stopping power
-     real, pointer :: stop_power(:,:) => null()
-     real, pointer, public :: stop_power_total(:) => null()
+     real, pointer :: stop_power_orbital(:,:) => null()
+     real, pointer, public :: stop_power(:) => null()
 
      ! degradation
      real, pointer, public :: degradation_gen_total(:,:) => null()
@@ -114,10 +114,10 @@ contains
   subroutine init_orbital_vars(self, ngrid)
     class(orbital) :: self
     integer, intent(in) :: ngrid
-    if (.not.associated(self%stop_power)) allocate(self%stop_power(self%number, ngrid))
+    if (.not.associated(self%stop_power_orbital)) allocate(self%stop_power_orbital(self%number, ngrid))
+    self%stop_power_orbital = 0.0
+    if (.not.associated(self%stop_power)) allocate(self%stop_power(ngrid))
     self%stop_power = 0.0
-    if (.not.associated(self%stop_power_total)) allocate(self%stop_power_total(ngrid))
-    self%stop_power_total = 0.0
 
     if (.not.associated(self%degradation_gen_total)) allocate(self%degradation_gen_total(ngen_degradation, ngrid))
     self%degradation_gen_total = 0.0
@@ -126,8 +126,8 @@ contains
 
   subroutine finish_orbital_vars(self)
     class(orbital) :: self
+    if (associated(self%stop_power_orbital)) nullify(self%stop_power_orbital)
     if (associated(self%stop_power)) nullify(self%stop_power)
-    if (associated(self%stop_power_total)) nullify(self%stop_power_total)
 
     if (associated(self%degradation_gen_total)) nullify(self%degradation_gen_total)
   end subroutine finish_orbital_vars
@@ -156,7 +156,7 @@ contains
 
           energy = egrid%val(ie)
           
-          self%stop_power(io, ie) = bb*self%number_electrons(io)/ &
+          self%stop_power_orbital(io, ie) = bb*self%number_electrons(io)/ &
                (energy + energy_ionize + energy_kinetic)* &
                ( 0.5*log((energy + energy_ionize)**4/ &
                (16.0*energy_singlet**2 * (energy + energy_ionize - energy_singlet) &
@@ -171,7 +171,7 @@ contains
                + 1.0/(energy + energy_ionize - energy_triplet)**2) ) &
                )
 
-!!$          self%stop_power(io, ie) = &
+!!$          self%stop_power_orbital(io, ie) = &
 !!$               integrate_sigma(self, "total", io, &
 !!$               egrid%val(ie), self%energy_singlet(io), 0.5*(egrid%val(ie) + self%energy_ionize(io))) &
 !!$               + 0.5*integrate_sigma(self, "exchange", io, &
@@ -183,7 +183,7 @@ contains
   
           energy = egrid%val(ie)
 
-          self%stop_power(io, ie) = bb*self%number_electrons(io)/ &
+          self%stop_power_orbital(io, ie) = bb*self%number_electrons(io)/ &
                (energy + energy_ionize + energy_kinetic)* &
                ( 0.5*log(energy**2*energy_ionize**2/ &
                (energy_singlet**2 * (energy + energy_ionize - energy_singlet) &
@@ -201,7 +201,7 @@ contains
                + 4.0/energy_singlet - 4.0/energy ) &
                )
           
-!!$          self%stop_power(io, ie) = &
+!!$          self%stop_power_orbital(io, ie) = &
 !!$               integrate_sigma(self, "total", io, &
 !!$               egrid%val(ie), self%energy_singlet(io), egrid%val(ie)) &
 !!$               + 0.5*integrate_sigma(self, "exchange", io, &
@@ -213,7 +213,7 @@ contains
   
           energy = egrid%val(ie)
 
-          self%stop_power(io, ie) = bb*self%number_electrons(io)/ &
+          self%stop_power_orbital(io, ie) = bb*self%number_electrons(io)/ &
                (energy + energy_ionize + energy_kinetic)* &
                ( 0.5*log(energy_ionize/(energy + energy_ionize - energy_triplet)) &
                + 0.5*(energy + energy_ionize)/energy_ionize &
@@ -225,12 +225,12 @@ contains
                + 0.5*(energy + energy_ionize)/energy_ionize**2 ) &
                )
 
-!!$          self%stop_power(io, ie) = 0.5*integrate_sigma(self, "exchange", io, &
+!!$          self%stop_power_orbital(io, ie) = 0.5*integrate_sigma(self, "exchange", io, &
 !!$               egrid%val(ie), self%energy_triplet(io), egrid%val(ie))
        end do
     end do 
 
-    self%stop_power_total(:) = sum(self%stop_power(:,:), dim=1)
+    self%stop_power(:) = sum(self%stop_power_orbital(:,:), dim=1)
     
   end subroutine calculate_stopping_power
 
@@ -333,9 +333,8 @@ contains
     
     if (gen == 1) then
 
-       self%stop_power_total = sum(self%stop_power(:,:), dim=1)
-       where(self%stop_power_total /= 0.)
-          self%degradation_gen_total(1, :) = 1./self%stop_power_total(:)
+       where(self%stop_power /= 0.)
+          self%degradation_gen_total(1, :) = 1./self%stop_power(:)
        end where
        
        energy2_max = egrid%val_max
@@ -383,8 +382,8 @@ contains
           self%degradation_gen_total(gen, i) = self%degradation_gen_total(gen, i-1) &
                + self%degradation_gen_total(gen,i)
        end do
-       where (self%stop_power_total /= 0.)
-          self%degradation_gen_total(gen, :) = self%degradation_gen_total(gen, :)/self%stop_power_total(:)
+       where (self%stop_power /= 0.)
+          self%degradation_gen_total(gen, :) = self%degradation_gen_total(gen, :)/self%stop_power(:)
        end where
     end if
     
