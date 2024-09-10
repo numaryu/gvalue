@@ -138,95 +138,35 @@ contains
     class(orbital) :: self
     integer :: io, ie
     integer :: ne1, ne2, ne3
-    real :: energy, energy_ionize, energy_singlet, energy_triplet, energy_kinetic
 
     do io = 1, self%number ! orbital index
 
-       energy_ionize = self%energy_ionize(io)
-       energy_singlet = self%energy_singlet(io)
-       energy_triplet = self%energy_triplet(io)
-       energy_kinetic = self%energy_kinetic(io)
-
-       ne1 = egrid%grid_number(energy_ionize)
-       ne2 = egrid%grid_number(energy_singlet)
-       ne3 = egrid%grid_number(energy_triplet)
+       ne1 = egrid%grid_number(self%energy_ionize(io))
+       ne2 = egrid%grid_number(self%energy_singlet(io))
+       ne3 = egrid%grid_number(self%energy_triplet(io))
 
        ! energy >=  energy_ionize
        do ie = 1, ne1
-
-          energy = egrid%val(ie)
-          
-          self%stop_power_orbital(io, ie) = bb*self%number_electrons(io)/ &
-               (energy + energy_ionize + energy_kinetic)* &
-               ( 0.5*log((energy + energy_ionize)**4/ &
-               (16.0*energy_singlet**2 * (energy + energy_ionize - energy_singlet) &
-               * (energy + energy_ionize - energy_triplet)) ) &
-               + 2.0 - 0.5*(energy + energy_ionize)/(energy + energy_ionize - energy_singlet) &
-               - 0.5*(energy + energy_ionize)/(energy + energy_ionize - energy_triplet) &
-               + 2.0/3.0*energy_kinetic* &
-               ( 2.0/energy_singlet + 1.0/(energy + energy_ionize - energy_triplet) &
-               + 1.0/(energy + energy_ionize - energy_singlet) - 4.0/(energy + energy_ionize) &
-               - 0.5*(energy + energy_ionize)* &
-               ( 1.0/(energy + energy_ionize - energy_singlet)**2 &
-               + 1.0/(energy + energy_ionize - energy_triplet)**2) ) &
-               )
-
-!!$          self%stop_power_orbital(io, ie) = &
-!!$               integrate_sigma(self, "total", io, &
-!!$               egrid%val(ie), self%energy_singlet(io), 0.5*(egrid%val(ie) + self%energy_ionize(io))) &
-!!$               + 0.5*integrate_sigma(self, "exchange", io, &
-!!$               egrid%val(ie), self%energy_triplet(io), self%energy_singlet(io))
+          self%stop_power_orbital(io, ie) = &
+               integrate_sigma(self, "total", io, &
+               egrid%val(ie), self%energy_singlet(io), 0.5*(egrid%val(ie) + self%energy_ionize(io))) &
+               + 0.5*integrate_sigma(self, "exchange", io, &
+               egrid%val(ie), self%energy_triplet(io), self%energy_singlet(io))
        end do
 
        ! energy_ionize > energy >=  energy_singlet
        do ie = ne1+1, ne2
-  
-          energy = egrid%val(ie)
-
-          self%stop_power_orbital(io, ie) = bb*self%number_electrons(io)/ &
-               (energy + energy_ionize + energy_kinetic)* &
-               ( 0.5*log(energy**2*energy_ionize**2/ &
-               (energy_singlet**2 * (energy + energy_ionize - energy_singlet) &
-               * (energy + energy_ionize - energy_triplet)) ) &
-               + 1.0 + energy/energy_ionize &
-               - 0.5*(energy + energy_ionize)/(energy + energy_ionize - energy_singlet) &
-               - 0.5*(energy + energy_ionize)/(energy + energy_ionize - energy_triplet) &
-               + energy_kinetic/3.0* &
-               ( 2.0*(energy + energy_ionize)/energy_ionize**2 &
-               - 4.0/energy_ionize &
-               + 2.0/(energy + energy_ionize - energy_singlet) &
-               + 2.0/(energy + energy_ionize - energy_triplet) &
-               - (energy + energy_ionize)/(energy + energy_ionize - energy_singlet)**2 &
-               - (energy + energy_ionize)/(energy + energy_ionize - energy_triplet)**2 &
-               + 4.0/energy_singlet - 4.0/energy ) &
-               )
-          
-!!$          self%stop_power_orbital(io, ie) = &
-!!$               integrate_sigma(self, "total", io, &
-!!$               egrid%val(ie), self%energy_singlet(io), egrid%val(ie)) &
-!!$               + 0.5*integrate_sigma(self, "exchange", io, &
-!!$               egrid%val(ie), self%energy_triplet(io), self%energy_singlet(io))
+          self%stop_power_orbital(io, ie) = &
+               integrate_sigma(self, "total", io, &
+               egrid%val(ie), self%energy_singlet(io), egrid%val(ie)) + &
+               0.5*integrate_sigma(self, "exchange", io, &
+               egrid%val(ie), self%energy_triplet(io), self%energy_singlet(io))
        end do
 
        ! energy_singlet > energy >=  energy_triplet
        do ie = ne2+1, ne3
-  
-          energy = egrid%val(ie)
-
-          self%stop_power_orbital(io, ie) = bb*self%number_electrons(io)/ &
-               (energy + energy_ionize + energy_kinetic)* &
-               ( 0.5*log(energy_ionize/(energy + energy_ionize - energy_triplet)) &
-               + 0.5*(energy + energy_ionize)/energy_ionize &
-               - 0.5*(energy + energy_ionize)/(energy + energy_ionize - energy_triplet) &
-               + 2.0/3.0*energy_kinetic* &
-               ( 1.0/(energy + energy_ionize-energy_triplet) &
-               - 1.0/energy_ionize &
-               - 0.5*(energy + energy_ionize)/(energy + energy_ionize - energy_triplet)**2 &
-               + 0.5*(energy + energy_ionize)/energy_ionize**2 ) &
-               )
-
-!!$          self%stop_power_orbital(io, ie) = 0.5*integrate_sigma(self, "exchange", io, &
-!!$               egrid%val(ie), self%energy_triplet(io), egrid%val(ie))
+          self%stop_power_orbital(io, ie) = 0.5*integrate_sigma(self, "exchange", io, &
+               egrid%val(ie), self%energy_triplet(io), egrid%val(ie))
        end do
     end do 
 
@@ -266,7 +206,7 @@ contains
 
     val = indefinite_sigma(range_max, energy, energy_ionize, energy_kinetic) &
          - indefinite_sigma(range_min, energy, energy_ionize, energy_kinetic)
-    val = val * self%number_electrons(io)
+    integrate_sigma = val * self%number_electrons(io)
 
     return
 
@@ -278,35 +218,36 @@ contains
       real :: val
       val = indefinite_sigma_Edir(x, energy, energy_ionize, energy_kinetic) + &
            indefinite_sigma_Eexc(x, energy, energy_ionize, energy_kinetic)
+      indefinite_sigma_Etot = val
       return 
     end function indefinite_sigma_Etot
     
     real function indefinite_sigma_Edir(x, energy, energy_ionize, energy_kinetic)
-      use mod_constants, only: bb
-      real, intent(in) :: x
-      real, intent(in) :: energy, energy_ionize, energy_kinetic
-      real :: val
-
-      val = bb/(energy + energy_ionize + energy_kinetic) * &
-           ( log(energy + energy_ionize - x) &
-           + (energy + energy_ionize)/(energy + energy_ionize -x) &
-           + 4./3.*energy_kinetic* &
-           ( - 1./(energy + energy_ionize - x) + &
-           + 0.5*(energy + energy_ionize)/(energy + energy_ionize - x)**2 )&
-           )
-
-      indefinite_sigma_Edir = val
-      return
-    end function indefinite_sigma_Edir
-
-    real function indefinite_sigma_Eexc(x, energy, energy_ionize, energy_kinetic)
-      use mod_constants, only: bb
+      use mod_constants, only: bb => bb_compat
       real, intent(in) :: x
       real, intent(in) :: energy, energy_ionize, energy_kinetic
       real :: val
 
       val = bb/(energy + energy_ionize + energy_kinetic) * &
            ( log(x) - 4./3.*energy_kinetic/x )
+
+      indefinite_sigma_Edir = val
+      return
+    end function indefinite_sigma_Edir
+
+    real function indefinite_sigma_Eexc(x, energy, energy_ionize, energy_kinetic)
+      use mod_constants, only: bb => bb_compat
+      real, intent(in) :: x
+      real, intent(in) :: energy, energy_ionize, energy_kinetic
+      real :: val
+
+      val = bb/(energy + energy_ionize + energy_kinetic) * &
+           ( log(energy + energy_ionize - x) &
+           + (energy + energy_ionize)/(energy + energy_ionize - x) &
+           + 4./3.*energy_kinetic* &
+           ( - 1./(energy + energy_ionize - x) + &
+           + 0.5*(energy + energy_ionize)/(energy + energy_ionize - x)**2 )&
+           )
 
       indefinite_sigma_Eexc = val
       return
