@@ -13,7 +13,7 @@ is rewritten by numaryu into Fortran 2023.
 
 ```
 # git clone https://github.com/numaryu/gvalue.git
-# cd value
+# cd gvalue
 # make
 ```
 
