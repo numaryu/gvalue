@@ -314,11 +314,12 @@ contains
 
   end function integrate_sigma
 
-  subroutine calculate_degradation(self, ngen)
+  recursive subroutine calculate_degradation(self, ngen_in)
     use mod_constants, only: bb => bb_compat
     use mod_grid, only: egrid
     class(orbital) :: self
-    integer, intent(in) :: ngen
+    integer, intent(in), optional :: ngen_in
+    integer :: ngen
     real :: energy1, denergy1, energy2, denergy2
     real :: energy_ionize, energy_kinetic
     integer :: io
@@ -326,19 +327,24 @@ contains
     real :: energy1_max, energy2_max
     integer :: nenergy_max
     integer :: nenergy1_max, nenergy2_max
-    integer :: out
+
+    if (.not.present(ngen_in)) then
+       ngen = ngen_degradation
+    else
+       ngen = ngen_in
+    end if
     
     nenergy_max = egrid%grid_number(minval(self%energy_triplet))
-    
+
     if (ngen == 1) then
 
        where(self%stop_power /= 0.)
           self%degradation_gen(1, :) = 1./self%stop_power(:)
        end where
-       
-    else if (ngen /= 1) then
 
-       self%degradation_gen(ngen, :) = 0.
+    else
+
+       call calculate_degradation(self, ngen-1)
        
        do io = 1, self%number
           energy_ionize = self%energy_ionize(io)
@@ -349,7 +355,7 @@ contains
           energy2_max = (egrid%val_max - (2**(ngen-1)-1)*energy_ionize)/(2**(ngen-1))
           nenergy1_max = egrid%grid_number(energy1_max)
           nenergy2_max = egrid%grid_number(energy2_max)
-          
+
           ! i: index of T2
           do i = nenergy2_max + 1, nenergy_max
              energy2 = egrid%val(i)
@@ -383,6 +389,8 @@ contains
           self%degradation_gen(ngen, :) = self%degradation_gen(ngen, :)/self%stop_power(:)
        end where
     end if
+
+    return
 
   end subroutine calculate_degradation
   
