@@ -26,7 +26,7 @@ module class_orbital
      real, pointer, public :: stop_power(:) => null()
 
      ! degradation
-     real, pointer, public :: degradation_gen_total(:,:) => null()
+     real, pointer, public :: degradation_gen(:,:) => null()
      
    contains
      final :: destroy
@@ -119,8 +119,8 @@ contains
     if (.not.associated(self%stop_power)) allocate(self%stop_power(ngrid))
     self%stop_power = 0.0
 
-    if (.not.associated(self%degradation_gen_total)) allocate(self%degradation_gen_total(ngen_degradation, ngrid))
-    self%degradation_gen_total = 0.0
+    if (.not.associated(self%degradation_gen)) allocate(self%degradation_gen(ngen_degradation, ngrid))
+    self%degradation_gen = 0.0
     
   end subroutine init_orbital_vars
 
@@ -129,7 +129,7 @@ contains
     if (associated(self%stop_power_orbital)) nullify(self%stop_power_orbital)
     if (associated(self%stop_power)) nullify(self%stop_power)
 
-    if (associated(self%degradation_gen_total)) nullify(self%degradation_gen_total)
+    if (associated(self%degradation_gen)) nullify(self%degradation_gen)
   end subroutine finish_orbital_vars
 
   subroutine calculate_stopping_power(self)
@@ -334,14 +334,14 @@ contains
     if (gen == 1) then
 
        where(self%stop_power /= 0.)
-          self%degradation_gen_total(1, :) = 1./self%stop_power(:)
+          self%degradation_gen(1, :) = 1./self%stop_power(:)
        end where
        
        energy2_max = egrid%val_max
        nenergy2_max = egrid%grid_number(energy2_max)
     else if (gen /= 1) then
 
-       self%degradation_gen_total(gen, :) = 0.
+       self%degradation_gen(gen, :) = 0.
        
        do io = 1, self%number
           energy_ionize = self%energy_ionize(io)
@@ -362,8 +362,8 @@ contains
                 energy1 = egrid%val(j)
                 denergy1 = egrid%val(j-1) - egrid%val(j)
                 if(energy1 > 2.0*energy2 + energy_ionize) then
-                   self%degradation_gen_total(gen, i) = self%degradation_gen_total(gen, i) &
-                        + self%number_electrons(io) * self%degradation_gen_total(gen-1, j) &
+                   self%degradation_gen(gen, i) = self%degradation_gen(gen, i) &
+                        + self%number_electrons(io) * self%degradation_gen(gen-1, j) &
                         * denergy1 * denergy2 &
                         * bb/(energy1 + energy_ionize + energy_kinetic) * &
                         ( 1.0/(energy2 + energy_ionize)**2 &
@@ -379,11 +379,11 @@ contains
        end do
 
        do i = nenergy1_max + 1, nenergy_max
-          self%degradation_gen_total(gen, i) = self%degradation_gen_total(gen, i-1) &
-               + self%degradation_gen_total(gen,i)
+          self%degradation_gen(gen, i) = self%degradation_gen(gen, i-1) &
+               + self%degradation_gen(gen,i)
        end do
        where (self%stop_power /= 0.)
-          self%degradation_gen_total(gen, :) = self%degradation_gen_total(gen, :)/self%stop_power(:)
+          self%degradation_gen(gen, :) = self%degradation_gen(gen, :)/self%stop_power(:)
        end where
     end if
     

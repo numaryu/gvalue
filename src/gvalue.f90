@@ -118,13 +118,13 @@ program gvalue
   diff5 = 0.
   diff6 = 0.
   do i=1, mt
-     diff1 = diff1 + abs(y1(i) - medium%degradation_gen_total(1, i))
-     diff2 = diff2 + abs(y2(i) - medium%degradation_gen_total(2, i))
-     diff3 = diff3 + abs(y3(i) - medium%degradation_gen_total(3, i))
-     diff4 = diff4 + abs(y4(i) - medium%degradation_gen_total(4, i))
-     diff5 = diff5 + abs(y5(i) - medium%degradation_gen_total(5, i))
-     diff6 = diff6 + abs(y6(i) - medium%degradation_gen_total(6, i))
-     write(333,*) s(i), y2(i), medium%degradation_gen_total(2, i)
+     diff1 = diff1 + abs(y1(i) - medium%degradation_gen(1, i))
+     diff2 = diff2 + abs(y2(i) - medium%degradation_gen(2, i))
+     diff3 = diff3 + abs(y3(i) - medium%degradation_gen(3, i))
+     diff4 = diff4 + abs(y4(i) - medium%degradation_gen(4, i))
+     diff5 = diff5 + abs(y5(i) - medium%degradation_gen(5, i))
+     diff6 = diff6 + abs(y6(i) - medium%degradation_gen(6, i))
+     write(333,*) s(i), y2(i), medium%degradation_gen(2, i)
   end do
   write(6,*) 'y1 diff', diff1
   write(6,*) 'y2 diff', diff2
