@@ -13,13 +13,12 @@ include	../make.conf
 
 all:	gvalue
 
-gvalue:	gvalue.o mod_constants.o mod_orbital.o mod_grid.o mod_vars.o mod_file_utils.o
+gvalue:	gvalue.o mod_constants.o mod_orbital.o mod_grid.o mod_file_utils.o
 gvalue: class_grid.o class_orbital.o
 	$(LD) $(LDFLAGS) -o $@ $^ $(LIBS)
 
-gvalue.o: mod_constants.o mod_orbital.o mod_grid.o mod_vars.o mod_file_utils.o
+gvalue.o: mod_constants.o mod_orbital.o mod_grid.o mod_file_utils.o
 gvalue.o: class_grid.o class_orbital.o
-mod_vars.o: mod_grid.o
 mod_orbital.o: mod_file_utils.o class_orbital.o
 class_orbital.o: mod_file_utils.o mod_constants.o mod_grid.o
 mod_grid.o: class_grid.o
