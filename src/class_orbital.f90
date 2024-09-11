@@ -614,30 +614,29 @@ contains
 
     unit = unit_stdout
 
-    write(unit,'("#")')
-    write(unit,'("#",a)') ' Yield:'
-    write(unit,'("#",4(a20))') 'Orbital', 'ionize', 'singlet', 'triplet'
+    write(unit,*)
+    write(unit,'(1x,a)') ' Yield:'
+    write(unit,'(1x,4(a20))') 'Orbital', 'ionize', 'singlet', 'triplet'
     do io = 1, self%number
-       write(unit,'("#",15x,i5,3(8x,f12.4))') &
+       write(unit,'(1x,15x,i5,3(8x,f12.4))') &
             io, self%yield_ionize(io), self%yield_singlet(io), self%yield_triplet(io)
     end do
     if (self%number > 1) then
-       write(unit,'("#",a20,3(8x,f12.4))') &
+       write(unit,'(1x,a20,3(8x,f12.4))') &
             'sum', sum(self%yield_ionize), sum(self%yield_singlet), sum(self%yield_triplet)
     end if
 
-    write(unit,'("#")')
-    write(unit,'("#",a)') ' G-value:'
-    write(unit,'("#",4(a20))') 'Orbital', 'ionize', 'singlet', 'triplet'
+    write(unit,*)
+    write(unit,'(1x,a)') ' G-value:'
+    write(unit,'(1x,4(a20))') 'Orbital', 'ionize', 'singlet', 'triplet'
     do io = 1, self%number
-       write(unit,'("#",15x,i5,3(8x,f12.4))') &
+       write(unit,'(1x,15x,i5,3(8x,f12.4))') &
             io, self%gvalue_ionize(io), self%gvalue_singlet(io), self%gvalue_triplet(io)
     end do
     if (self%number > 1) then
-       write(unit,'("#",a20,3(8x,f12.4))') &
+       write(unit,'(1x,a20,3(8x,f12.4))') &
             'sum', sum(self%gvalue_ionize), sum(self%gvalue_singlet), sum(self%gvalue_triplet)
     end if
-    write(unit,'("#")')
 
   end subroutine print_results
 
