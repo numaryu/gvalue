@@ -37,6 +37,14 @@ module class_orbital
      real, pointer, public :: total_cross_section_singlet(:) => null()
      real, pointer, public :: total_cross_section_triplet(:) => null()
 
+     ! platzman energy*y(energy)*Q(energy)
+     real, pointer, public :: platzman_ionize_orbital(:,:) => null()
+     real, pointer, public :: platzman_singlet_orbital(:,:) => null()
+     real, pointer, public :: platzman_triplet_orbital(:,:) => null()
+     real, pointer, public :: platzman_ionize(:) => null()
+     real, pointer, public :: platzman_singlet(:) => null()
+     real, pointer, public :: platzman_triplet(:) => null()
+
    contains
      final :: destroy
      procedure, public :: init_orbital_vars
@@ -127,7 +135,7 @@ contains
     if (.not.associated(self%stop_power_orbital)) allocate(self%stop_power_orbital(self%number, ngrid))
     self%stop_power_orbital = 0.0
     if (.not.associated(self%stop_power)) allocate(self%stop_power(ngrid))
-!    self%stop_power = 0.0 ! not necessary
+!!!    self%stop_power = 0.0 ! not necessary
 
     if (.not.associated(self%degradation_gen)) allocate(self%degradation_gen(ngen_degradation, ngrid))
     self%degradation_gen = 0.0
@@ -148,9 +156,30 @@ contains
          allocate(self%total_cross_section_singlet(ngrid))
     if (.not.associated(self%total_cross_section_triplet)) &
          allocate(self%total_cross_section_triplet(ngrid))
-!    self%total_cross_section_ionize = 0.0 ! not necessary
-!    self%total_cross_section_singlet = 0.0 ! not necessary
-!    self%total_cross_section_triplet = 0.0 ! not necessary
+!!!    self%total_cross_section_ionize = 0.0 ! not necessary
+!!!    self%total_cross_section_singlet = 0.0 ! not necessary
+!!!    self%total_cross_section_triplet = 0.0 ! not necessary
+
+    if (.not.associated(self%platzman_ionize_orbital)) &
+         allocate(self%platzman_ionize_orbital(self%number, ngrid))
+    if (.not.associated(self%platzman_singlet_orbital)) &
+         allocate(self%platzman_singlet_orbital(self%number, ngrid))
+    if (.not.associated(self%platzman_triplet_orbital)) &
+         allocate(self%platzman_triplet_orbital(self%number, ngrid))
+    self%platzman_ionize_orbital = 0.0
+    self%platzman_singlet_orbital = 0.0
+    self%platzman_triplet_orbital = 0.0
+
+    if (.not.associated(self%platzman_ionize)) &
+         allocate(self%platzman_ionize(ngrid))
+    if (.not.associated(self%platzman_singlet)) &
+         allocate(self%platzman_singlet(ngrid))
+    if (.not.associated(self%platzman_triplet)) &
+         allocate(self%platzman_triplet(ngrid))
+!!!    self%platzman_ionize = 0.0
+!!!    self%platzman_singlet = 0.0
+!!!    self%platzman_triplet = 0.0
+
   end subroutine init_orbital_vars
 
   subroutine finish_orbital_vars(self)
@@ -170,6 +199,14 @@ contains
     if (associated(self%total_cross_section_ionize)) nullify(self%total_cross_section_ionize)
     if (associated(self%total_cross_section_singlet)) nullify(self%total_cross_section_singlet)
     if (associated(self%total_cross_section_triplet)) nullify(self%total_cross_section_triplet)
+
+    if (associated(self%platzman_ionize_orbital)) nullify(self%platzman_ionize_orbital)
+    if (associated(self%platzman_singlet_orbital)) nullify(self%platzman_singlet_orbital)
+    if (associated(self%platzman_triplet_orbital)) nullify(self%platzman_triplet_orbital)
+
+    if (associated(self%platzman_ionize)) nullify(self%platzman_ionize)
+    if (associated(self%platzman_singlet)) nullify(self%platzman_singlet)
+    if (associated(self%platzman_triplet)) nullify(self%platzman_triplet)
   end subroutine finish_orbital_vars
 
   subroutine calculate_stopping_power(self)
@@ -430,20 +467,22 @@ contains
     self%total_cross_section_triplet(:) = sum(self%total_cross_section_triplet_orbital(:,:), dim=1)
 
     do io = 1, self%number
-       self%yield_ionize(io) = sum(egrid%val * sum(self%degradation_gen, dim=1) * &
-            self%total_cross_section_ionize_orbital(io, :)) &
-            - 0.5*egrid%val(1) * sum(self%degradation_gen(:,1), dim=1) * &
-            self%total_cross_section_ionize_orbital(io, 1)
+       self%platzman_ionize_orbital(io, :) = egrid%val * &
+            sum(self%degradation_gen, dim=1) * &
+            self%total_cross_section_ionize_orbital(io, :)
+       self%platzman_singlet_orbital(io, :) = egrid%val * &
+            sum(self%degradation_gen, dim=1) * &
+            self%total_cross_section_singlet_orbital(io, :)
+       self%platzman_triplet_orbital(io, :) = egrid%val * &
+            sum(self%degradation_gen, dim=1) * &
+            self%total_cross_section_triplet_orbital(io, :)
 
-       self%yield_singlet(io) = sum(egrid%val * sum(self%degradation_gen, dim=1) * &
-            self%total_cross_section_singlet_orbital(io, :)) &
-            - 0.5*egrid%val(1) * sum(self%degradation_gen(:,1), dim=1) * &
-            self%total_cross_section_singlet_orbital(io, 1)
-
-       self%yield_triplet(io) = sum(egrid%val * sum(self%degradation_gen, dim=1) * &
-            self%total_cross_section_triplet_orbital(io, :)) &
-            - 0.5*egrid%val(1) * sum(self%degradation_gen(:,1), dim=1) * &
-            self%total_cross_section_triplet_orbital(io, 1)
+       self%yield_ionize(io) = sum(self%platzman_ionize_orbital(io, :)) &
+            - 0.5*self%platzman_ionize_orbital(io, 1)
+       self%yield_singlet(io) = sum(self%platzman_singlet_orbital(io, :)) &
+            - 0.5*self%platzman_singlet_orbital(io, 1)
+       self%yield_triplet(io) = sum(self%platzman_triplet_orbital(io, :)) &
+            - 0.5*self%platzman_triplet_orbital(io, 1)
     end do
 
     ! integrate over energy
