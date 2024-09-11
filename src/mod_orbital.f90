@@ -33,7 +33,7 @@ module mod_orbital
 contains
 
   subroutine init_orbital
-    use mod_file_utils, only: get_unused_unit
+    use mod_file_utils, only: get_unused_unit, unit_stdin, unit_stdout
     integer :: unit
     character (len=100) :: file_orbital
     integer :: norbital
@@ -41,8 +41,8 @@ contains
     namelist /orbital_dim/ norbital
     if (initialized) return
 
-    read(5, param_orbital)
-    write(6, param_orbital)
+    read(unit_stdin, param_orbital)
+    write(unit_stdout, param_orbital)
     
     call get_unused_unit(unit)
     open(unit,file=trim(file_orbital))

@@ -27,6 +27,7 @@ module mod_grid
 contains
 
   subroutine init_grid
+    use mod_file_utils, only: unit_stdin, unit_stdout
     integer :: i
 
     ! number of division in energy grid
@@ -39,8 +40,8 @@ contains
 
     if (initialized) return
 
-    read(5,grid_param)
-    write(6,grid_param)
+    read(unit_stdin, grid_param)
+    write(unit_stdout, grid_param)
 
     egrid = grid(nediv, egrid_max, egrid_min)
     
