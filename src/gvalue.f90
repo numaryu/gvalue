@@ -1,18 +1,17 @@
+!
+!     *** Theory of G-value ***
+!
+!     Ionization and singlet and triplet excitations.
+!
+!     References
+!     1) S. Sato, K. Okazaki, S. Ohno, Bull. Chem. Soc. Jpn, 47, 2174 (1974).
+!     2) K. Okazaki, S. Sato, S. Ohno, Bull. Chem. Soc. Jpn, 48, 1411 (1975).
+!
 program gvalue
   use mod_orbital, only: init_orbital, finish_orbital
   use mod_orbital, only: medium
   use mod_grid, only: init_grid, finish_grid
   use mod_grid, only: egrid
-  !
-  !     *** Theory of G-value ***
-  !
-  !     Ionization and singlet and triplet excitations.
-  !     Number of atomic or molecular orbitals n く= 20.
-  !
-  !     References
-  !     1) S. Sato, K. Okazaki, S. Ohno, Bull. Chem. Soc. Jpn, 47, 2174 (1974).
-  !     2) K. Okazaki, S. Sato, S. Ohno, Bull. Chem. Soc. Jpn, 48, 1411 (1975).
-  !
 
   call init_orbital
   call init_grid
