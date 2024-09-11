@@ -10,29 +10,39 @@ module class_orbital
      private
      ! number of orbital
      integer, public :: number = 0
-     ! ionization, kinetic, singlet, triplet energies
+     ! ionization Ii, kinetic Ei, singlet Esi, triplet Eti energies (per orbital)
      real, pointer, public :: energy_ionize(:) => null(), energy_kinetic(:) => null()
      real, pointer, public :: energy_singlet(:) => null(), energy_triplet(:) => null()
      ! number of electrons
      real, pointer, public :: number_electrons(:) => null()
 
-     ! number and gvalue of processes
-     real, pointer :: number_ionize(:) => null(), gvalue_ionize(:) => null()
-     real, pointer :: number_singlet(:) => null(), gvalue_singlet(:) => null()
-     real, pointer :: number_triplet(:) => null(), gvalue_triplet(:) => null()
+     ! yield Ni and G value of processes (per orbital)
+     real, pointer, public :: yield_ionize(:) => null(), gvalue_ionize(:) => null()
+     real, pointer, public :: yield_singlet(:) => null(), gvalue_singlet(:) => null()
+     real, pointer, public :: yield_triplet(:) => null(), gvalue_triplet(:) => null()
 
-     ! stopping power
+     ! stopping power S(energy), Si(energy) (per orbital)
      real, pointer :: stop_power_orbital(:,:) => null()
      real, pointer, public :: stop_power(:) => null()
 
-     ! degradation
+     ! degradation y(generation, energy)
      real, pointer, public :: degradation_gen(:,:) => null()
-     
+
+     ! total cross section Qion(energy), Qsngl(energy), Qtrpl(energy)
+     !                     Qion,i(energy), Qsngl,i(energy), Qtripl,i(energy) (per orbital)
+     real, pointer, public :: total_cross_section_ionize_orbital(:,:) => null()
+     real, pointer, public :: total_cross_section_singlet_orbital(:,:) => null()
+     real, pointer, public :: total_cross_section_triplet_orbital(:,:) => null()
+     real, pointer, public :: total_cross_section_ionize(:) => null()
+     real, pointer, public :: total_cross_section_singlet(:) => null()
+     real, pointer, public :: total_cross_section_triplet(:) => null()
+
    contains
      final :: destroy
      procedure, public :: init_orbital_vars
      procedure :: calculate_stopping_power
      procedure :: calculate_degradation
+     procedure :: calculate_yield
   end type orbital
 
   ! declare constructor
@@ -54,11 +64,11 @@ contains
     if (.not.associated(init_orbital%energy_triplet)) allocate(init_orbital%energy_triplet(norbital))
     if (.not.associated(init_orbital%number_electrons)) allocate(init_orbital%number_electrons(norbital))
 
-    if (.not.associated(init_orbital%number_ionize)) allocate(init_orbital%number_ionize(norbital))
+    if (.not.associated(init_orbital%yield_ionize)) allocate(init_orbital%yield_ionize(norbital))
     if (.not.associated(init_orbital%gvalue_ionize)) allocate(init_orbital%gvalue_ionize(norbital))
-    if (.not.associated(init_orbital%number_singlet)) allocate(init_orbital%number_singlet(norbital))
+    if (.not.associated(init_orbital%yield_singlet)) allocate(init_orbital%yield_singlet(norbital))
     if (.not.associated(init_orbital%gvalue_singlet)) allocate(init_orbital%gvalue_singlet(norbital))
-    if (.not.associated(init_orbital%number_triplet)) allocate(init_orbital%number_triplet(norbital))
+    if (.not.associated(init_orbital%yield_triplet)) allocate(init_orbital%yield_triplet(norbital))
     if (.not.associated(init_orbital%gvalue_triplet)) allocate(init_orbital%gvalue_triplet(norbital))
 
     call read_params(init_orbital, norbital, file_orbital)
@@ -72,11 +82,11 @@ contains
     if (associated(self%energy_triplet)) nullify(self%energy_triplet)
     if (associated(self%number_electrons)) nullify(self%number_electrons)
 
-    if (associated(self%number_ionize)) nullify(self%number_ionize)
+    if (associated(self%yield_ionize)) nullify(self%yield_ionize)
     if (associated(self%gvalue_ionize)) nullify(self%gvalue_ionize)
-    if (associated(self%number_singlet)) nullify(self%number_singlet)
+    if (associated(self%yield_singlet)) nullify(self%yield_singlet)
     if (associated(self%gvalue_singlet)) nullify(self%gvalue_singlet)
-    if (associated(self%number_triplet)) nullify(self%number_triplet)
+    if (associated(self%yield_triplet)) nullify(self%yield_triplet)
     if (associated(self%gvalue_triplet)) nullify(self%gvalue_triplet)
 
     call finish_orbital_vars(self)
@@ -117,11 +127,30 @@ contains
     if (.not.associated(self%stop_power_orbital)) allocate(self%stop_power_orbital(self%number, ngrid))
     self%stop_power_orbital = 0.0
     if (.not.associated(self%stop_power)) allocate(self%stop_power(ngrid))
-    self%stop_power = 0.0
+!    self%stop_power = 0.0 ! not necessary
 
     if (.not.associated(self%degradation_gen)) allocate(self%degradation_gen(ngen_degradation, ngrid))
     self%degradation_gen = 0.0
+
+    if (.not.associated(self%total_cross_section_ionize_orbital)) &
+         allocate(self%total_cross_section_ionize_orbital(self%number, ngrid))
+    if (.not.associated(self%total_cross_section_singlet_orbital)) &
+         allocate(self%total_cross_section_singlet_orbital(self%number, ngrid))
+    if (.not.associated(self%total_cross_section_triplet_orbital)) &
+         allocate(self%total_cross_section_triplet_orbital(self%number, ngrid))
+    self%total_cross_section_ionize_orbital = 0.0
+    self%total_cross_section_singlet_orbital = 0.0
+    self%total_cross_section_triplet_orbital = 0.0
     
+    if (.not.associated(self%total_cross_section_ionize)) &
+         allocate(self%total_cross_section_ionize(ngrid))
+    if (.not.associated(self%total_cross_section_singlet)) &
+         allocate(self%total_cross_section_singlet(ngrid))
+    if (.not.associated(self%total_cross_section_triplet)) &
+         allocate(self%total_cross_section_triplet(ngrid))
+!    self%total_cross_section_ionize = 0.0 ! not necessary
+!    self%total_cross_section_singlet = 0.0 ! not necessary
+!    self%total_cross_section_triplet = 0.0 ! not necessary
   end subroutine init_orbital_vars
 
   subroutine finish_orbital_vars(self)
@@ -130,6 +159,17 @@ contains
     if (associated(self%stop_power)) nullify(self%stop_power)
 
     if (associated(self%degradation_gen)) nullify(self%degradation_gen)
+
+    if (associated(self%total_cross_section_ionize_orbital)) &
+         nullify(self%total_cross_section_ionize_orbital)
+    if (associated(self%total_cross_section_singlet_orbital)) &
+         nullify(self%total_cross_section_singlet_orbital)
+    if (associated(self%total_cross_section_triplet_orbital)) &
+         nullify(self%total_cross_section_triplet_orbital)
+
+    if (associated(self%total_cross_section_ionize)) nullify(self%total_cross_section_ionize)
+    if (associated(self%total_cross_section_singlet)) nullify(self%total_cross_section_singlet)
+    if (associated(self%total_cross_section_triplet)) nullify(self%total_cross_section_triplet)
   end subroutine finish_orbital_vars
 
   subroutine calculate_stopping_power(self)
@@ -333,5 +373,166 @@ contains
     return
 
   end subroutine calculate_degradation
+
+  subroutine calculate_yield(self)
+    use mod_grid, only: egrid
+    class(orbital) :: self
+    integer :: io, ie
+    integer :: ne1, ne2, ne3
+
+    do io = 1, self%number
+
+       ne1 = egrid%grid_number(self%energy_ionize(io))
+       ne2 = egrid%grid_number(self%energy_singlet(io))
+       ne3 = egrid%grid_number(self%energy_triplet(io))
+
+       ! energy >=  energy_ionize
+       do ie = 1, ne1
+          self%total_cross_section_ionize_orbital(io, ie) = &
+               integrate_sigma(self, "direct", io, &
+               egrid%val(ie), self%energy_ionize(io), egrid%val(ie))
+
+          self%total_cross_section_singlet_orbital(io, ie) = &
+               integrate_sigma(self, "direct", io, &
+               egrid%val(ie), self%energy_singlet(io), self%energy_ionize(io)) &
+               + 0.5*integrate_sigma(self, "exchange", io, &
+               egrid%val(ie), self%energy_singlet(io), self%energy_ionize(io))
+
+          self%total_cross_section_triplet_orbital(io, ie) = &
+               0.5*integrate_sigma(self, "exchange", io, &
+               egrid%val(ie), self%energy_triplet(io), self%energy_ionize(io) )
+       end do
+
+       ! energy_ionize > energy >=  energy_singlet
+       do ie = ne1+1, ne2
+          self%total_cross_section_singlet_orbital(io, ie) = &
+               integrate_sigma(self, "direct", io, &
+               egrid%val(ie), self%energy_singlet(io), egrid%val(ie)) &
+               + 0.5*integrate_sigma(self, "exchange", io, &
+               egrid%val(ie), self%energy_singlet(io), egrid%val(ie))
+
+          self%total_cross_section_triplet_orbital(io, ie) = &
+               0.5*integrate_sigma(self, "exchange", io, &
+               egrid%val(ie), self%energy_triplet(io), egrid%val(ie))
+       end do
+
+       ! singlet_energy > energy >=  energy_triplet
+       do ie = ne2+1, ne3
+          self%total_cross_section_triplet_orbital(io, ie) = &
+               0.5*integrate_sigma(self, "exchange", io, &
+               egrid%val(ie), self%energy_triplet(io), egrid%val(ie))
+       end do
+
+    end do
+
+    self%total_cross_section_ionize(:) = sum(self%total_cross_section_ionize_orbital(:,:), dim=1)
+    self%total_cross_section_singlet(:) = sum(self%total_cross_section_singlet_orbital(:,:), dim=1)
+    self%total_cross_section_triplet(:) = sum(self%total_cross_section_triplet_orbital(:,:), dim=1)
+
+    do io = 1, self%number
+       self%yield_ionize(io) = sum(egrid%val * sum(self%degradation_gen, dim=1) * &
+            self%total_cross_section_ionize_orbital(io, :)) &
+            - 0.5*egrid%val(1) * sum(self%degradation_gen(:,1), dim=1) * &
+            self%total_cross_section_ionize_orbital(io, 1)
+
+       self%yield_singlet(io) = sum(egrid%val * sum(self%degradation_gen, dim=1) * &
+            self%total_cross_section_singlet_orbital(io, :)) &
+            - 0.5*egrid%val(1) * sum(self%degradation_gen(:,1), dim=1) * &
+            self%total_cross_section_singlet_orbital(io, 1)
+
+       self%yield_triplet(io) = sum(egrid%val * sum(self%degradation_gen, dim=1) * &
+            self%total_cross_section_triplet_orbital(io, :)) &
+            - 0.5*egrid%val(1) * sum(self%degradation_gen(:,1), dim=1) * &
+            self%total_cross_section_triplet_orbital(io, 1)
+    end do
+
+    ! integrate over energy
+    ! minus sign is because the energy grid is in the descending order
+    self%yield_ionize = self%number_electrons * self%yield_ionize * (-log(egrid%div))
+    self%yield_singlet = self%number_electrons * self%yield_singlet * (-log(egrid%div))
+    self%yield_triplet = self%number_electrons * self%yield_triplet * (-log(egrid%div))
+
+    self%gvalue_ionize = 100. * self%yield_ionize/egrid%val_max
+    self%gvalue_singlet = 100. * self%yield_singlet/egrid%val_max
+    self%gvalue_triplet = 100. * self%yield_triplet/egrid%val_max
+
+  end subroutine calculate_yield
   
+  real function integrate_sigma(self, type, io, energy, range_min, range_max)
+    class(orbital) :: self
+    character (len=*) :: type
+    integer, intent(in) :: io
+    real, intent(in) :: energy
+    real, intent(in) :: range_min, range_max
+    real :: val
+    real :: energy_ionize, energy_kinetic
+
+    abstract interface
+       real function indefinite_integral(x, energy, energy_ionize, energy_kinetic)
+         real, intent(in) :: x
+         real, intent(in) :: energy, energy_ionize, energy_kinetic
+       end function indefinite_integral
+    end interface
+
+    procedure (indefinite_integral), pointer :: indefinite_sigma => null()
+
+    select case(type)
+    case ("total")
+       indefinite_sigma => indefinite_sigma_Etot
+    case ("direct")
+       indefinite_sigma => indefinite_sigma_Edir
+    case ("exchange")
+       indefinite_sigma => indefinite_sigma_Eexc
+    end select
+
+    energy_ionize = self%energy_ionize(io)
+    energy_kinetic = self%energy_kinetic(io)
+
+    val = indefinite_sigma(range_max, energy, energy_ionize, energy_kinetic) &
+         - indefinite_sigma(range_min, energy, energy_ionize, energy_kinetic)
+    integrate_sigma = val
+
+    return
+
+  contains
+
+    real function indefinite_sigma_Etot(x, energy, energy_ionize, energy_kinetic)
+      real, intent(in) :: x
+      real, intent(in) :: energy, energy_ionize, energy_kinetic
+      real :: val
+      val = indefinite_sigma_Edir(x, energy, energy_ionize, energy_kinetic) + &
+           indefinite_sigma_Eexc(x, energy, energy_ionize, energy_kinetic)
+      indefinite_sigma_Etot = val
+      return
+    end function indefinite_sigma_Etot
+
+    real function indefinite_sigma_Edir(x, energy, energy_ionize, energy_kinetic)
+      use mod_constants, only: bb => bb_compat
+      real, intent(in) :: x
+      real, intent(in) :: energy, energy_ionize, energy_kinetic
+      real :: val
+
+      val = bb/(energy + energy_ionize + energy_kinetic) * &
+           ( -1./x - 2./3.*energy_kinetic/x**2 )
+
+      indefinite_sigma_Edir = val
+      return
+    end function indefinite_sigma_Edir
+
+    real function indefinite_sigma_Eexc(x, energy, energy_ionize, energy_kinetic)
+      use mod_constants, only: bb => bb_compat
+      real, intent(in) :: x
+      real, intent(in) :: energy, energy_ionize, energy_kinetic
+      real :: val
+
+      val = bb/(energy + energy_ionize + energy_kinetic) * &
+           ( 1./(energy + energy_ionize - x) &
+           + 2./3.*energy_kinetic/(energy + energy_ionize -x)**2 )
+
+      indefinite_sigma_Eexc = val
+      return
+    end function indefinite_sigma_Eexc
+
+  end function integrate_sigma
+
 end module class_orbital

@@ -12,7 +12,7 @@ module class_grid
      ! nhalf means T of i+nediv is a half of T of i
      integer :: nhalf = 0
      ! ratio of neiboring grids Ti/Ti+1
-     real :: div = 0.
+     real, public :: div = 0.
      ! grids
      real, pointer, public :: val(:) => null()
      ! maximum and minimumx of grids
