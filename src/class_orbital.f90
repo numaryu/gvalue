@@ -133,7 +133,6 @@ contains
   end subroutine finish_orbital_vars
 
   subroutine calculate_stopping_power(self)
-    use mod_constants, only: bb => bb_compat
     use mod_grid, only: egrid
     class(orbital) :: self
     integer :: io, ie
@@ -148,24 +147,24 @@ contains
        ! energy >=  energy_ionize
        do ie = 1, ne1
           self%stop_power_orbital(io, ie) = &
-               integrate_sigma(self, "total", io, &
+               integrate_E_sigma(self, "total", io, &
                egrid%val(ie), self%energy_singlet(io), 0.5*(egrid%val(ie) + self%energy_ionize(io))) &
-               + 0.5*integrate_sigma(self, "exchange", io, &
+               + 0.5*integrate_E_sigma(self, "exchange", io, &
                egrid%val(ie), self%energy_triplet(io), self%energy_singlet(io))
        end do
 
        ! energy_ionize > energy >=  energy_singlet
        do ie = ne1+1, ne2
           self%stop_power_orbital(io, ie) = &
-               integrate_sigma(self, "total", io, &
+               integrate_E_sigma(self, "total", io, &
                egrid%val(ie), self%energy_singlet(io), egrid%val(ie)) + &
-               0.5*integrate_sigma(self, "exchange", io, &
+               0.5*integrate_E_sigma(self, "exchange", io, &
                egrid%val(ie), self%energy_triplet(io), self%energy_singlet(io))
        end do
 
        ! energy_singlet > energy >=  energy_triplet
        do ie = ne2+1, ne3
-          self%stop_power_orbital(io, ie) = 0.5*integrate_sigma(self, "exchange", io, &
+          self%stop_power_orbital(io, ie) = 0.5*integrate_E_sigma(self, "exchange", io, &
                egrid%val(ie), self%energy_triplet(io), egrid%val(ie))
        end do
     end do 
@@ -174,7 +173,7 @@ contains
     
   end subroutine calculate_stopping_power
 
-  real function integrate_sigma(self, type, io, energy, range_min, range_max)
+  real function integrate_E_sigma(self, type, io, energy, range_min, range_max)
     class(orbital) :: self
     character (len=*) :: type
     integer, intent(in) :: io
@@ -190,39 +189,39 @@ contains
        end function indefinite_integral
     end interface
       
-    procedure (indefinite_integral), pointer :: indefinite_sigma => null()
+    procedure (indefinite_integral), pointer :: indefinite_E_sigma => null()
       
     select case(type)
     case ("total")
-       indefinite_sigma => indefinite_sigma_Etot
+       indefinite_E_sigma => indefinite_E_sigma_Etot
     case ("direct")
-       indefinite_sigma => indefinite_sigma_Edir
+       indefinite_E_sigma => indefinite_E_sigma_Edir
     case ("exchange")
-       indefinite_sigma => indefinite_sigma_Eexc
+       indefinite_E_sigma => indefinite_E_sigma_Eexc
     end select
     
     energy_ionize = self%energy_ionize(io)
     energy_kinetic = self%energy_kinetic(io)
 
-    val = indefinite_sigma(range_max, energy, energy_ionize, energy_kinetic) &
-         - indefinite_sigma(range_min, energy, energy_ionize, energy_kinetic)
-    integrate_sigma = val * self%number_electrons(io)
+    val = indefinite_E_sigma(range_max, energy, energy_ionize, energy_kinetic) &
+         - indefinite_E_sigma(range_min, energy, energy_ionize, energy_kinetic)
+    integrate_E_sigma = val * self%number_electrons(io)
 
     return
 
   contains
     
-    real function indefinite_sigma_Etot(x, energy, energy_ionize, energy_kinetic)
+    real function indefinite_E_sigma_Etot(x, energy, energy_ionize, energy_kinetic)
       real, intent(in) :: x
       real, intent(in) :: energy, energy_ionize, energy_kinetic
       real :: val
-      val = indefinite_sigma_Edir(x, energy, energy_ionize, energy_kinetic) + &
-           indefinite_sigma_Eexc(x, energy, energy_ionize, energy_kinetic)
-      indefinite_sigma_Etot = val
+      val = indefinite_E_sigma_Edir(x, energy, energy_ionize, energy_kinetic) + &
+           indefinite_E_sigma_Eexc(x, energy, energy_ionize, energy_kinetic)
+      indefinite_E_sigma_Etot = val
       return 
-    end function indefinite_sigma_Etot
+    end function indefinite_E_sigma_Etot
     
-    real function indefinite_sigma_Edir(x, energy, energy_ionize, energy_kinetic)
+    real function indefinite_E_sigma_Edir(x, energy, energy_ionize, energy_kinetic)
       use mod_constants, only: bb => bb_compat
       real, intent(in) :: x
       real, intent(in) :: energy, energy_ionize, energy_kinetic
@@ -231,11 +230,11 @@ contains
       val = bb/(energy + energy_ionize + energy_kinetic) * &
            ( log(x) - 4./3.*energy_kinetic/x )
 
-      indefinite_sigma_Edir = val
+      indefinite_E_sigma_Edir = val
       return
-    end function indefinite_sigma_Edir
+    end function indefinite_E_sigma_Edir
 
-    real function indefinite_sigma_Eexc(x, energy, energy_ionize, energy_kinetic)
+    real function indefinite_E_sigma_Eexc(x, energy, energy_ionize, energy_kinetic)
       use mod_constants, only: bb => bb_compat
       real, intent(in) :: x
       real, intent(in) :: energy, energy_ionize, energy_kinetic
@@ -249,11 +248,11 @@ contains
            + 0.5*(energy + energy_ionize)/(energy + energy_ionize - x)**2 )&
            )
 
-      indefinite_sigma_Eexc = val
+      indefinite_E_sigma_Eexc = val
       return
-    end function indefinite_sigma_Eexc
+    end function indefinite_E_sigma_Eexc
 
-  end function integrate_sigma
+  end function integrate_E_sigma
 
   recursive subroutine calculate_degradation(self, ngen_in)
     use mod_constants, only: bb => bb_compat
