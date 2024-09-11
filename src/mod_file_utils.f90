@@ -2,6 +2,11 @@ module mod_file_utils
   implicit none
   private
   public :: get_unused_unit
+  public :: unit_stdin, unit_stdout, unit_stderr
+
+  integer, parameter :: unit_stdin = 5
+  integer, parameter :: unit_stdout = 6
+  integer, parameter :: unit_stderr = 0
 
 contains
 

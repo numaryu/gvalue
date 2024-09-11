@@ -37,13 +37,10 @@ module class_orbital
      real, pointer, public :: total_cross_section_singlet(:) => null()
      real, pointer, public :: total_cross_section_triplet(:) => null()
 
-     ! platzman energy*y(energy)*Q(energy)
+     ! platzman energy*y(energy)*Q(energy) (per orbital)
      real, pointer, public :: platzman_ionize_orbital(:,:) => null()
      real, pointer, public :: platzman_singlet_orbital(:,:) => null()
      real, pointer, public :: platzman_triplet_orbital(:,:) => null()
-     real, pointer, public :: platzman_ionize(:) => null()
-     real, pointer, public :: platzman_singlet(:) => null()
-     real, pointer, public :: platzman_triplet(:) => null()
 
    contains
      final :: destroy
@@ -51,6 +48,7 @@ module class_orbital
      procedure :: calculate_stopping_power
      procedure :: calculate_degradation
      procedure :: calculate_yield
+     procedure :: print_results
   end type orbital
 
   ! declare constructor
@@ -170,16 +168,6 @@ contains
     self%platzman_singlet_orbital = 0.0
     self%platzman_triplet_orbital = 0.0
 
-    if (.not.associated(self%platzman_ionize)) &
-         allocate(self%platzman_ionize(ngrid))
-    if (.not.associated(self%platzman_singlet)) &
-         allocate(self%platzman_singlet(ngrid))
-    if (.not.associated(self%platzman_triplet)) &
-         allocate(self%platzman_triplet(ngrid))
-!!!    self%platzman_ionize = 0.0
-!!!    self%platzman_singlet = 0.0
-!!!    self%platzman_triplet = 0.0
-
   end subroutine init_orbital_vars
 
   subroutine finish_orbital_vars(self)
@@ -203,10 +191,6 @@ contains
     if (associated(self%platzman_ionize_orbital)) nullify(self%platzman_ionize_orbital)
     if (associated(self%platzman_singlet_orbital)) nullify(self%platzman_singlet_orbital)
     if (associated(self%platzman_triplet_orbital)) nullify(self%platzman_triplet_orbital)
-
-    if (associated(self%platzman_ionize)) nullify(self%platzman_ionize)
-    if (associated(self%platzman_singlet)) nullify(self%platzman_singlet)
-    if (associated(self%platzman_triplet)) nullify(self%platzman_triplet)
   end subroutine finish_orbital_vars
 
   subroutine calculate_stopping_power(self)
@@ -573,5 +557,88 @@ contains
     end function indefinite_sigma_Eexc
 
   end function integrate_sigma
+
+  subroutine print_results(self)
+    use mod_file_utils, only: get_unused_unit, unit_stdout
+    use mod_grid, only: egrid
+    class(orbital) :: self
+    integer :: io, ie
+    integer :: unit
+    character (len=100) :: file
+
+    file = 'output_all.dat'
+
+    call get_unused_unit(unit)
+    open(unit, file=trim(file))
+
+    write(unit,'("#")')
+    write(unit,'("#",a)') ' Yield:'
+    write(unit,'("#",4(a20))') 'Orbital', 'ionize', 'singlet', 'triplet'
+    do io = 1, self%number
+       write(unit,'("#",15x,i5,3(8x,f12.4))') &
+            io, self%yield_ionize(io), self%yield_singlet(io), self%yield_triplet(io)
+    end do
+    if (self%number > 1) then
+       write(unit,'("#",a20,3(8x,f12.4))') &
+            'sum', sum(self%yield_ionize), sum(self%yield_singlet), sum(self%yield_triplet)
+    end if
+
+    write(unit,'("#")')
+    write(unit,'("#",a)') ' G-value:'
+    write(unit,'("#",4(a20))') 'Orbital', 'ionize', 'singlet', 'triplet'
+    do io = 1, self%number
+       write(unit,'("#",15x,i5,3(8x,f12.4))') &
+            io, self%gvalue_ionize(io), self%gvalue_singlet(io), self%gvalue_triplet(io)
+    end do
+    if (self%number > 1) then
+       write(unit,'("#",a20,3(8x,f12.4))') &
+            'sum', sum(self%gvalue_ionize), sum(self%gvalue_singlet), sum(self%gvalue_triplet)
+    end if
+    write(unit,'("#")')
+
+    write(unit,'("#",9(1x,a20))') 'energy', 'Stopping Power', 'Degradation (sum)', &
+         'Total Cross Sec. i', 'Total Cross Sec. s', 'Total Cross Sec. t', &
+         'Platzman i', 'Platzman s', 'Platzman t'
+
+    do ie = 1, egrid%number
+       write(unit,'(1x,9(1x,e20.12))') egrid%val(ie), self%stop_power(ie), &
+            sum(self%degradation_gen(:, ie)), &
+            self%total_cross_section_ionize(ie), &
+            self%total_cross_section_singlet(ie), &
+            self%total_cross_section_triplet(ie), &
+            sum(self%platzman_ionize_orbital(:, ie)), &
+            sum(self%platzman_singlet_orbital(:, ie)), &
+            sum(self%platzman_triplet_orbital(:, ie))
+    end do
+    close(unit)
+
+    unit = unit_stdout
+
+    write(unit,'("#")')
+    write(unit,'("#",a)') ' Yield:'
+    write(unit,'("#",4(a20))') 'Orbital', 'ionize', 'singlet', 'triplet'
+    do io = 1, self%number
+       write(unit,'("#",15x,i5,3(8x,f12.4))') &
+            io, self%yield_ionize(io), self%yield_singlet(io), self%yield_triplet(io)
+    end do
+    if (self%number > 1) then
+       write(unit,'("#",a20,3(8x,f12.4))') &
+            'sum', sum(self%yield_ionize), sum(self%yield_singlet), sum(self%yield_triplet)
+    end if
+
+    write(unit,'("#")')
+    write(unit,'("#",a)') ' G-value:'
+    write(unit,'("#",4(a20))') 'Orbital', 'ionize', 'singlet', 'triplet'
+    do io = 1, self%number
+       write(unit,'("#",15x,i5,3(8x,f12.4))') &
+            io, self%gvalue_ionize(io), self%gvalue_singlet(io), self%gvalue_triplet(io)
+    end do
+    if (self%number > 1) then
+       write(unit,'("#",a20,3(8x,f12.4))') &
+            'sum', sum(self%gvalue_ionize), sum(self%gvalue_singlet), sum(self%gvalue_triplet)
+    end if
+    write(unit,'("#")')
+
+  end subroutine print_results
 
 end module class_orbital
