@@ -28,15 +28,15 @@ contains
 
     read(unit_stdin, param_orbital)
     write(unit_stdout, param_orbital)
-    read(unit_stdin, param_medium)
-    write(unit_stdout, param_medium)
     
     call get_unused_unit(unit)
-    open(unit,file=trim(file_orbital))
-    read(unit,orbital_dim)
+    open(unit, file=trim(file_orbital))
+    read(unit, orbital_dim)
+    read(unit, param_medium)
     close(unit)
-    write(6,orbital_dim)
-    if (debug) write(6,*) norbital
+    write(unit_stdout, orbital_dim)
+    write(unit_stdout, param_medium)
+    if (debug) write(unit_stdout, *) norbital
 
     medium = orbital(norbital, file_orbital)
 
