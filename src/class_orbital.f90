@@ -615,7 +615,7 @@ contains
     end if
     write(unit,'("#")')
 
-    write(unit,'("#",10(1x,a20))') 'energy', 'Stopping Power', 'Degradation (sum)', &
+    write(unit,'("#",10(1x,a20))') 'Energy', 'Stopping Power', 'Degradation (sum)', &
          'Total Cross Sec. i', 'Total Cross Sec. s', 'Total Cross Sec. t', &
          'Platzman i', 'Platzman s', 'Platzman t', 'Mean Free Path'
 
