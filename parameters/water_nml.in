@@ -6,5 +6,5 @@
  energy_singlet = 7.420 9.500 13.000 27.000 535.000
  energy_triplet = 5.000 7.000 11.000 25.000 533.000
  energy_kinetic = 70.400 66.460 28.410 74.940 799.600
- number_electrons = 5*0.5380e+20
+ number_electrons = 2 2 2 2 2
 /

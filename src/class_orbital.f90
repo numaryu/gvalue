@@ -13,8 +13,10 @@ module class_orbital
      ! ionization Ii, kinetic Ei, singlet Esi, triplet Eti energies (per orbital)
      real, pointer, public :: energy_ionize(:) => null(), energy_kinetic(:) => null()
      real, pointer, public :: energy_singlet(:) => null(), energy_triplet(:) => null()
-     ! number of electrons
-     real, pointer, public :: number_electrons(:) => null()
+     ! number of electrons (per orbital)
+     integer, pointer, public :: number_electrons(:) => null()
+     ! number density
+     real, public :: number_density
 
      ! yield Ni and G value of processes (per orbital)
      real, pointer, public :: yield_ionize(:) => null(), gvalue_ionize(:) => null()
@@ -41,6 +43,9 @@ module class_orbital
      real, pointer, public :: platzman_ionize_orbital(:,:) => null()
      real, pointer, public :: platzman_singlet_orbital(:,:) => null()
      real, pointer, public :: platzman_triplet_orbital(:,:) => null()
+
+     ! mean free path
+     real, pointer, public :: mean_free_path(:) => null()
 
    contains
      final :: destroy
@@ -168,6 +173,9 @@ contains
     self%platzman_singlet_orbital = 0.0
     self%platzman_triplet_orbital = 0.0
 
+    if (.not.associated(self%mean_free_path)) allocate(self%mean_free_path(ngrid))
+    self%mean_free_path = 0.0
+
   end subroutine init_orbital_vars
 
   subroutine finish_orbital_vars(self)
@@ -191,6 +199,8 @@ contains
     if (associated(self%platzman_ionize_orbital)) nullify(self%platzman_ionize_orbital)
     if (associated(self%platzman_singlet_orbital)) nullify(self%platzman_singlet_orbital)
     if (associated(self%platzman_triplet_orbital)) nullify(self%platzman_triplet_orbital)
+
+    if (associated(self%mean_free_path)) nullify(self%mean_free_path)
   end subroutine finish_orbital_vars
 
   subroutine calculate_stopping_power(self)
@@ -266,7 +276,7 @@ contains
 
     val = indefinite_E_sigma(range_max, energy, energy_ionize, energy_kinetic) &
          - indefinite_E_sigma(range_min, energy, energy_ionize, energy_kinetic)
-    integrate_E_sigma = val * self%number_electrons(io)
+    integrate_E_sigma = val * self%number_electrons(io) * self%number_density
 
     return
 
@@ -367,7 +377,8 @@ contains
                 denergy1 = egrid%val(j-1) - egrid%val(j)
                 if (energy1 > 2.0*energy2 + energy_ionize) then
                    self%degradation_gen(ngen, i) = self%degradation_gen(ngen, i) &
-                        + self%number_electrons(io) * self%degradation_gen(ngen-1, j) &
+                        + self%number_electrons(io) * self%number_density &
+                        * self%degradation_gen(ngen-1, j) &
                         * denergy1 * denergy2 &
                         * bb/(energy1 + energy_ionize + energy_kinetic) * &
                         ( 1.0/(energy2 + energy_ionize)**2 &
@@ -469,11 +480,19 @@ contains
             - 0.5*self%platzman_triplet_orbital(io, 1)
     end do
 
+    self%mean_free_path = self%number_density*( &
+         self%total_cross_section_ionize + &
+         self%total_cross_section_singlet + &
+         self%total_cross_section_triplet )
+    where (self%mean_free_path /= 0.)
+       self%mean_free_path = 1./self%mean_free_path
+    end where
+
     ! integrate over energy
     ! minus sign is because the energy grid is in the descending order
-    self%yield_ionize = self%number_electrons * self%yield_ionize * (-log(egrid%div))
-    self%yield_singlet = self%number_electrons * self%yield_singlet * (-log(egrid%div))
-    self%yield_triplet = self%number_electrons * self%yield_triplet * (-log(egrid%div))
+    self%yield_ionize = self%number_electrons * self%number_density * self%yield_ionize * (-log(egrid%div))
+    self%yield_singlet = self%number_electrons * self%number_density * self%yield_singlet * (-log(egrid%div))
+    self%yield_triplet = self%number_electrons * self%number_density * self%yield_triplet * (-log(egrid%div))
 
     self%gvalue_ionize = 100. * self%yield_ionize/egrid%val_max
     self%gvalue_singlet = 100. * self%yield_singlet/egrid%val_max
@@ -566,7 +585,7 @@ contains
     integer :: unit
     character (len=100) :: file
 
-    file = 'output_all.dat'
+    file = 'results.dat'
 
     call get_unused_unit(unit)
     open(unit, file=trim(file))
@@ -596,19 +615,20 @@ contains
     end if
     write(unit,'("#")')
 
-    write(unit,'("#",9(1x,a20))') 'energy', 'Stopping Power', 'Degradation (sum)', &
+    write(unit,'("#",10(1x,a20))') 'energy', 'Stopping Power', 'Degradation (sum)', &
          'Total Cross Sec. i', 'Total Cross Sec. s', 'Total Cross Sec. t', &
-         'Platzman i', 'Platzman s', 'Platzman t'
+         'Platzman i', 'Platzman s', 'Platzman t', 'Mean Free Path'
 
     do ie = 1, egrid%number
-       write(unit,'(1x,9(1x,e20.12))') egrid%val(ie), self%stop_power(ie), &
+       write(unit,'(1x,10(1x,e20.12))') egrid%val(ie), self%stop_power(ie), &
             sum(self%degradation_gen(:, ie)), &
             self%total_cross_section_ionize(ie), &
             self%total_cross_section_singlet(ie), &
             self%total_cross_section_triplet(ie), &
             sum(self%platzman_ionize_orbital(:, ie)), &
             sum(self%platzman_singlet_orbital(:, ie)), &
-            sum(self%platzman_triplet_orbital(:, ie))
+            sum(self%platzman_triplet_orbital(:, ie)), &
+            self%mean_free_path(ie)
     end do
     close(unit)
 

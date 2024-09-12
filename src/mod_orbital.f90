@@ -37,12 +37,17 @@ contains
     integer :: unit
     character (len=100) :: file_orbital
     integer :: norbital
+    real :: number_density
     namelist /param_orbital/ file_orbital
     namelist /orbital_dim/ norbital
+    namelist /param_medium/ number_density
+
     if (initialized) return
 
     read(unit_stdin, param_orbital)
     write(unit_stdout, param_orbital)
+    read(unit_stdin, param_medium)
+    write(unit_stdout, param_medium)
     
     call get_unused_unit(unit)
     open(unit,file=trim(file_orbital))
@@ -52,6 +57,8 @@ contains
     if (debug) write(6,*) norbital
 
     medium = orbital(norbital, file_orbital)
+
+    medium%number_density = number_density
 
     ! for backward compatibility
     norbital_compat = norbital
