@@ -1,10 +1,16 @@
 &orbital_dim
  norbital = 5
 /
+
+&param_medium
+ number_density = 0.26875e20
+/
+
+! K. Okazaki et al Bull. Chem. Soc. JPN 49, 174 (1976).
 &orbital_params
- energy_ionize = 12.600 14.700 18.400 32.200 539.700
- energy_singlet = 7.420 9.500 13.000 27.000 535.000
- energy_triplet = 5.000 7.000 11.000 25.000 533.000
- energy_kinetic = 70.400 66.460 28.410 74.940 799.600
- number_electrons = 2 2 2 2 2
+    energy_ionize = 12.6  14.7  18.4  32.2  539.7
+   energy_singlet =  7.42  9.5  13.   27.   535.
+   energy_triplet =  5.0   7.   11.   25.   533.
+   energy_kinetic = 70.40 66.46 28.41 74.94 799.6
+ number_electrons =     2     2     2     2     2
 /

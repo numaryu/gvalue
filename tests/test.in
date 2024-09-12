@@ -2,10 +2,6 @@
  file_orbital = "helium_nml.in"
 /
 
-&param_medium
- number_density = 0.26875e20
-/
-
 &grid_param
  nediv = 40
  egrid_max = 1.e5
