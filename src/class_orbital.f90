@@ -115,7 +115,7 @@ contains
     real :: energy_kinetic(norbital)
     real :: energy_singlet(norbital)
     real :: energy_triplet(norbital)
-    real :: number_electrons(norbital)
+    integer :: number_electrons(norbital)
     
     namelist /orbital_params/ energy_ionize, energy_kinetic, &
          energy_singlet, energy_triplet, number_electrons
