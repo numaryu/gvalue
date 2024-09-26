@@ -15,7 +15,6 @@ contains
 
   subroutine init_grid
     use mod_file_utils, only: unit_stdin, unit_stdout
-    integer :: i
 
     ! number of division in energy grid
     ! nediv means T of i+nediv is a half of T of i
