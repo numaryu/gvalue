@@ -377,10 +377,10 @@ contains
           energy1_max = (egrid%val_max - (2**(ngen-2)-1)*energy_ionize)/(2**(ngen-2))
           if (ngen == 2) energy1_max = egrid%val_max
           energy2_max = (egrid%val_max - (2**(ngen-1)-1)*energy_ionize)/(2**(ngen-1))
+          if (energy2_max < minval(self%energy_triplet)) cycle
+
           nenergy1_max = egrid%grid_number(energy1_max)
           nenergy2_max = egrid%grid_number(energy2_max)
-
-          if (energy2_max < minval(self%energy_triplet)) cycle
 
           ! i: index of T2
           do i = nenergy2_max + 1, nenergy_max
@@ -408,7 +408,7 @@ contains
           end do
        end do
 
-       do i = nenergy1_max + 1, nenergy_max
+       do i = 2, nenergy_max
           self%degradation_gen(ngen, i) = self%degradation_gen(ngen, i-1) &
                + self%degradation_gen(ngen,i)
        end do
