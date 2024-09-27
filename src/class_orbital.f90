@@ -429,46 +429,58 @@ contains
 
     do io = 1, self%number
 
-       ne1 = egrid%grid_number(self%energy_ionize(io))
-       ne2 = egrid%grid_number(self%energy_singlet(io))
-       ne3 = egrid%grid_number(self%energy_triplet(io))
+       if (self%energy_ionize(io) < egrid%val_max) then
+          ne1 = egrid%grid_number(self%energy_ionize(io))
 
-       ! energy >=  energy_ionize
-       do ie = 1, ne1
-          self%total_cross_section_ionize_orbital(io, ie) = &
-               integrate_sigma(self, "direct", io, &
-               egrid%val(ie), self%energy_ionize(io), egrid%val(ie))
+          ! energy >=  energy_ionize
+          do ie = 1, ne1
+             self%total_cross_section_ionize_orbital(io, ie) = &
+                  integrate_sigma(self, "direct", io, &
+                  egrid%val(ie), self%energy_ionize(io), egrid%val(ie))
 
-          self%total_cross_section_singlet_orbital(io, ie) = &
-               integrate_sigma(self, "direct", io, &
-               egrid%val(ie), self%energy_singlet(io), self%energy_ionize(io)) &
-               + 0.5*integrate_sigma(self, "exchange", io, &
-               egrid%val(ie), self%energy_singlet(io), self%energy_ionize(io))
+             self%total_cross_section_singlet_orbital(io, ie) = &
+                  integrate_sigma(self, "direct", io, &
+                  egrid%val(ie), self%energy_singlet(io), self%energy_ionize(io)) &
+                  + 0.5*integrate_sigma(self, "exchange", io, &
+                  egrid%val(ie), self%energy_singlet(io), self%energy_ionize(io))
 
-          self%total_cross_section_triplet_orbital(io, ie) = &
-               0.5*integrate_sigma(self, "exchange", io, &
-               egrid%val(ie), self%energy_triplet(io), self%energy_ionize(io) )
-       end do
+             self%total_cross_section_triplet_orbital(io, ie) = &
+                  0.5*integrate_sigma(self, "exchange", io, &
+                  egrid%val(ie), self%energy_triplet(io), self%energy_ionize(io) )
+          end do
+       else
+          ne1 = 0
+       end if
 
-       ! energy_ionize > energy >=  energy_singlet
-       do ie = ne1+1, ne2
-          self%total_cross_section_singlet_orbital(io, ie) = &
-               integrate_sigma(self, "direct", io, &
-               egrid%val(ie), self%energy_singlet(io), egrid%val(ie)) &
-               + 0.5*integrate_sigma(self, "exchange", io, &
-               egrid%val(ie), self%energy_singlet(io), egrid%val(ie))
+       if (self%energy_singlet(io) < egrid%val_max) then
+          ne2 = egrid%grid_number(self%energy_singlet(io))
 
-          self%total_cross_section_triplet_orbital(io, ie) = &
-               0.5*integrate_sigma(self, "exchange", io, &
-               egrid%val(ie), self%energy_triplet(io), egrid%val(ie))
-       end do
+          ! energy_ionize > energy >=  energy_singlet
+          do ie = ne1+1, ne2
+             self%total_cross_section_singlet_orbital(io, ie) = &
+                  integrate_sigma(self, "direct", io, &
+                  egrid%val(ie), self%energy_singlet(io), egrid%val(ie)) &
+                  + 0.5*integrate_sigma(self, "exchange", io, &
+                  egrid%val(ie), self%energy_singlet(io), egrid%val(ie))
 
-       ! singlet_energy > energy >=  energy_triplet
-       do ie = ne2+1, ne3
-          self%total_cross_section_triplet_orbital(io, ie) = &
-               0.5*integrate_sigma(self, "exchange", io, &
-               egrid%val(ie), self%energy_triplet(io), egrid%val(ie))
-       end do
+             self%total_cross_section_triplet_orbital(io, ie) = &
+                  0.5*integrate_sigma(self, "exchange", io, &
+                  egrid%val(ie), self%energy_triplet(io), egrid%val(ie))
+          end do
+       else
+          ne2 = 0
+       end if
+
+       if (self%energy_triplet(io) < egrid%val_max) then
+          ne3 = egrid%grid_number(self%energy_triplet(io))
+
+          ! singlet_energy > energy >=  energy_triplet
+          do ie = ne2+1, ne3
+             self%total_cross_section_triplet_orbital(io, ie) = &
+                  0.5*integrate_sigma(self, "exchange", io, &
+                  egrid%val(ie), self%energy_triplet(io), egrid%val(ie))
+          end do
+       end if
 
     end do
 
