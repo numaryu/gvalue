@@ -666,7 +666,7 @@ contains
     use mod_file_utils, only: get_unused_unit, unit_stdout
     use mod_grid, only: egrid
     class(orbital) :: self
-    integer :: io, ie, igen
+    integer :: ie, igen
     integer :: unit
     character (len=100) :: file
 
