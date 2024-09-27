@@ -98,16 +98,17 @@ plot \
 	title "Triplet"
 
 set xlabel "Energy {/Times-Italic T} [eV]"
-set ylabel "Mean Free Path {/Symbol l}({/Times-Italic T}) [cm]"
+set ylabel "Mean Free Path {/Symbol l}({/Times-Italic T}) [nm]"
 
-unset log
-set log x
+set log
 set format x "10^{%L}"
 set format y "% h"
+set yrange [0.1:10]
 
 set key top right Left samplen 2 width 0
 
+factor_cm_to_nm=1.e7
 plot \
-	"results.dat" u 1:10 w l \
+	"results.dat" u 1:($10*factor_cm_to_nm) w l \
 	lw 4 lc 1 \
 	title "", \
