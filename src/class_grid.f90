@@ -55,6 +55,7 @@ contains
   integer function grid_number(self, val)
     class(grid) :: self
     real, intent(in) :: val
+    if (val < 0.) stop 'ERROR: invalid input for grid_number'
     grid_number = int(self%nhalf*(log(self%val_max/val)/log(2.))+1)
     return
   end function grid_number
