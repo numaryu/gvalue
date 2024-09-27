@@ -380,6 +380,8 @@ contains
           nenergy1_max = egrid%grid_number(energy1_max)
           nenergy2_max = egrid%grid_number(energy2_max)
 
+          if (energy2_max < minval(self%energy_triplet)) cycle
+
           ! i: index of T2
           do i = nenergy2_max + 1, nenergy_max
              energy2 = egrid%val(i)
