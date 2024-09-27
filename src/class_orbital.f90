@@ -658,6 +658,38 @@ contains
             'sum', sum(self%gvalue_ionize), sum(self%gvalue_singlet), sum(self%gvalue_triplet)
     end if
 
+    call print_results_degradation(self)
+
   end subroutine print_results
+
+  subroutine print_results_degradation(self)
+    use mod_file_utils, only: get_unused_unit, unit_stdout
+    use mod_grid, only: egrid
+    class(orbital) :: self
+    integer :: io, ie, igen
+    integer :: unit
+    character (len=100) :: file
+
+    file = 'results_degradation.dat'
+
+    call get_unused_unit(unit)
+    open(unit, file=trim(file))
+
+    write(unit,'("#",2(1x,a20))', advance='no') 'Energy', 'Degradation (sum)'
+    do igen = 1, ngen_degradation
+       write(unit,'(1x, a16, 1x, i3)', advance='no') 'Degradation ', igen
+    end do
+    write(unit,*)
+
+    do ie = 1, egrid%number
+       write(unit,'(1x,2(1x,e20.12))', advance='no') egrid%val(ie), sum(self%degradation_gen(:, ie))
+       do igen = 1, ngen_degradation
+          write(unit,'(1x,e20.12)', advance='no') self%degradation_gen(igen, ie)
+       end do
+       write(unit,*)
+    end do
+    close(unit)
+
+  end subroutine print_results_degradation
 
 end module class_orbital
