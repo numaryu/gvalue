@@ -211,34 +211,47 @@ contains
 
     do io = 1, self%number ! orbital index
 
-       ne1 = egrid%grid_number(self%energy_ionize(io))
-       ne2 = egrid%grid_number(self%energy_singlet(io))
-       ne3 = egrid%grid_number(self%energy_triplet(io))
+       if (self%energy_ionize(io) < egrid%val_max) then
+          ne1 = egrid%grid_number(self%energy_ionize(io))
 
-       ! energy >=  energy_ionize
-       do ie = 1, ne1
-          self%stop_power_orbital(io, ie) = &
-               integrate_E_sigma(self, "total", io, &
-               egrid%val(ie), self%energy_singlet(io), 0.5*(egrid%val(ie) + self%energy_ionize(io))) &
-               + 0.5*integrate_E_sigma(self, "exchange", io, &
-               egrid%val(ie), self%energy_triplet(io), self%energy_singlet(io))
-       end do
+          ! energy >=  energy_ionize
+          do ie = 1, ne1
+             self%stop_power_orbital(io, ie) = &
+                  integrate_E_sigma(self, "total", io, &
+                  egrid%val(ie), self%energy_singlet(io), 0.5*(egrid%val(ie) + self%energy_ionize(io))) &
+                  + 0.5*integrate_E_sigma(self, "exchange", io, &
+                  egrid%val(ie), self%energy_triplet(io), self%energy_singlet(io))
+          end do
+       else
+          ne1 = 0
+       end if
 
-       ! energy_ionize > energy >=  energy_singlet
-       do ie = ne1+1, ne2
-          self%stop_power_orbital(io, ie) = &
-               integrate_E_sigma(self, "total", io, &
-               egrid%val(ie), self%energy_singlet(io), egrid%val(ie)) + &
-               0.5*integrate_E_sigma(self, "exchange", io, &
-               egrid%val(ie), self%energy_triplet(io), self%energy_singlet(io))
-       end do
+       if (self%energy_singlet(io) < egrid%val_max) then
+          ne2 = egrid%grid_number(self%energy_singlet(io))
 
-       ! energy_singlet > energy >=  energy_triplet
-       do ie = ne2+1, ne3
-          self%stop_power_orbital(io, ie) = 0.5*integrate_E_sigma(self, "exchange", io, &
-               egrid%val(ie), self%energy_triplet(io), egrid%val(ie))
-       end do
-    end do 
+          ! energy_ionize > energy >=  energy_singlet
+          do ie = ne1+1, ne2
+             self%stop_power_orbital(io, ie) = &
+                  integrate_E_sigma(self, "total", io, &
+                  egrid%val(ie), self%energy_singlet(io), egrid%val(ie)) + &
+                  0.5*integrate_E_sigma(self, "exchange", io, &
+                  egrid%val(ie), self%energy_triplet(io), self%energy_singlet(io))
+          end do
+       else
+          ne2 = 0
+       end if
+
+       if (self%energy_triplet(io) < egrid%val_max) then
+          ne3 = egrid%grid_number(self%energy_triplet(io))
+
+          ! energy_singlet > energy >=  energy_triplet
+          do ie = ne2+1, ne3
+             self%stop_power_orbital(io, ie) = 0.5*integrate_E_sigma(self, "exchange", io, &
+                  egrid%val(ie), self%energy_triplet(io), egrid%val(ie))
+          end do
+       end if
+
+    end do
 
     self%stop_power(:) = sum(self%stop_power_orbital(:,:), dim=1)
     
