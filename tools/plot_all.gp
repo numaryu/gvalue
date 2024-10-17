@@ -100,7 +100,7 @@ plot \
 set xlabel "Energy {/Times-Italic T} [eV]"
 set ylabel "Mean Free Path {/Symbol l}({/Times-Italic T}) [nm]"
 
-set log
+set log x
 set format x "10^{%L}"
 set format y "% h"
 set yrange [0.1:10]
@@ -110,5 +110,23 @@ set key top right Left samplen 2 width 0
 factor_cm_to_nm=1.e7
 plot \
 	"results.dat" u 1:($10*factor_cm_to_nm) w l \
+	lw 4 lc 1 \
+	title "", \
+
+set auto
+
+set xlabel "Energy {/Times-Italic T} [eV]"
+set ylabel "Range [nm]"
+
+set log x
+set format x "10^{%L}"
+set format y "% h"
+#set yrange [0.1:10]
+
+set key top right Left samplen 2 width 0
+
+factor_cm_to_nm=1.e7
+plot \
+	"results.dat" u 1:($11*factor_cm_to_nm) w l \
 	lw 4 lc 1 \
 	title "", \

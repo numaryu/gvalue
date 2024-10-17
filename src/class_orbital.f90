@@ -47,6 +47,9 @@ module class_orbital
      ! mean free path
      real, pointer, public :: mean_free_path(:) => null()
 
+     ! range
+     real, pointer, public :: range(:) => null()
+
    contains
      final :: destroy
      procedure, public :: init_orbital_vars
@@ -176,6 +179,9 @@ contains
     if (.not.associated(self%mean_free_path)) allocate(self%mean_free_path(ngrid))
     self%mean_free_path = 0.0
 
+    if (.not.associated(self%range)) allocate(self%range(ngrid))
+    self%range = 0.0
+
   end subroutine init_orbital_vars
 
   subroutine finish_orbital_vars(self)
@@ -201,6 +207,8 @@ contains
     if (associated(self%platzman_triplet_orbital)) nullify(self%platzman_triplet_orbital)
 
     if (associated(self%mean_free_path)) nullify(self%mean_free_path)
+
+    if (associated(self%range)) nullify(self%range)
   end subroutine finish_orbital_vars
 
   subroutine calculate_stopping_power(self)
@@ -426,6 +434,7 @@ contains
     class(orbital) :: self
     integer :: io, ie
     integer :: ne1, ne2, ne3
+    integer :: ne3_max = 1
 
     do io = 1, self%number
 
@@ -473,8 +482,9 @@ contains
 
        if (self%energy_triplet(io) < egrid%val_max) then
           ne3 = egrid%grid_number(self%energy_triplet(io))
+          if (ne3 > ne3_max) ne3_max = ne3
 
-          ! singlet_energy > energy >=  energy_triplet
+          ! Singlet_energy > energy >=  energy_triplet
           do ie = ne2+1, ne3
              self%total_cross_section_triplet_orbital(io, ie) = &
                   0.5*integrate_sigma(self, "exchange", io, &
@@ -514,6 +524,13 @@ contains
     where (self%mean_free_path /= 0.)
        self%mean_free_path = 1./self%mean_free_path
     end where
+
+    where (self%stop_power /= 0.)
+       self%range(:) = egrid%val(:) / self%stop_power(:) * (-log(egrid%div))
+    end where
+    do ie = ne3_max-1, 1, -1
+       self%range(ie) = self%range(ie+1) + self%range(ie)
+    end do
 
     ! integrate over energy
     ! minus sign is because the energy grid is in the descending order
@@ -642,12 +659,12 @@ contains
     end if
     write(unit,'("#")')
 
-    write(unit,'("#",10(1x,a20))') 'Energy', 'Stopping Power', 'Degradation (sum)', &
+    write(unit,'("#",11(1x,a20))') 'Energy', 'Stopping Power', 'Degradation (sum)', &
          'Total Cross Sec. i', 'Total Cross Sec. s', 'Total Cross Sec. t', &
-         'Platzman i', 'Platzman s', 'Platzman t', 'Mean Free Path'
+         'Platzman i', 'Platzman s', 'Platzman t', 'Mean Free Path', 'Range'
 
     do ie = 1, egrid%number
-       write(unit,'(1x,10(1x,e20.12))') egrid%val(ie), self%stop_power(ie), &
+       write(unit,'(1x,11(1x,e20.12))') egrid%val(ie), self%stop_power(ie), &
             sum(self%degradation_gen(:, ie)), &
             self%total_cross_section_ionize(ie), &
             self%total_cross_section_singlet(ie), &
@@ -655,7 +672,8 @@ contains
             sum(self%platzman_ionize_orbital(:, ie)), &
             sum(self%platzman_singlet_orbital(:, ie)), &
             sum(self%platzman_triplet_orbital(:, ie)), &
-            self%mean_free_path(ie)
+            self%mean_free_path(ie), &
+            self%range(ie)
     end do
     close(unit)
 
