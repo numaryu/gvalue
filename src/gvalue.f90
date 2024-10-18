@@ -16,6 +16,7 @@ program gvalue
   
   mywork = work()
   call mywork%execute()
+  call mywork%print_results()
 
   stop
 

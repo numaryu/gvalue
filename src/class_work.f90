@@ -13,6 +13,7 @@ module class_work
    contains
      final :: destroy
      procedure :: execute
+     procedure :: print_results
   end type work
 
   type subwork
@@ -71,8 +72,6 @@ contains
        call self%worker(iwork)%medium%calculate_degradation(self%worker(iwork)%egrid)
        call self%worker(iwork)%medium%calculate_yield(self%worker(iwork)%egrid)
 
-       call self%worker(iwork)%medium%print_results(self%worker(iwork)%name, self%worker(iwork)%egrid)
-
        write(6,'(/1x,a,i0,a/)') '=====> WORK ', iwork, ': done'
     end do
   contains
@@ -129,5 +128,149 @@ contains
     end subroutine init_grid
 
   end subroutine execute
+
+  subroutine print_results(self)
+    use mod_file_utils, only: get_unused_unit, unit_stdout
+    use class_grid, only: grid
+    class(work) :: self
+    integer :: iwork
+    integer :: io, ie
+    integer :: unit
+    character (len=100) :: file
+
+    do iwork = 1, self%number
+       file = trim(self%worker(iwork)%name)//'.dat'
+
+       call get_unused_unit(unit)
+       open(unit, file=trim(file))
+
+       write(unit,'("#")')
+       write(unit,'("#",a)') ' Yield:'
+       write(unit,'("#",4(a20))') 'Orbital', 'ionize', 'singlet', 'triplet'
+       do io = 1, self%worker(iwork)%medium%number
+          write(unit,'("#",15x,i5,3(8x,f12.4))') io, &
+               self%worker(iwork)%medium%yield_ionize(io), &
+               self%worker(iwork)%medium%yield_singlet(io), &
+               self%worker(iwork)%medium%yield_triplet(io)
+       end do
+       if (self%worker(iwork)%medium%number > 1) then
+          write(unit,'("#",a20,3(8x,f12.4))') 'sum', &
+               sum(self%worker(iwork)%medium%yield_ionize), &
+               sum(self%worker(iwork)%medium%yield_singlet), &
+               sum(self%worker(iwork)%medium%yield_triplet)
+       end if
+
+       write(unit,'("#")')
+       write(unit,'("#",a)') ' G-value:'
+       write(unit,'("#",4(a20))') 'Orbital', 'ionize', 'singlet', 'triplet'
+       do io = 1, self%worker(iwork)%medium%number
+          write(unit,'("#",15x,i5,3(8x,f12.4))') io, &
+               self%worker(iwork)%medium%gvalue_ionize(io), &
+               self%worker(iwork)%medium%gvalue_singlet(io), &
+               self%worker(iwork)%medium%gvalue_triplet(io)
+       end do
+       if (self%worker(iwork)%medium%number > 1) then
+          write(unit,'("#",a20,3(8x,f12.4))') 'sum', &
+               sum(self%worker(iwork)%medium%gvalue_ionize), &
+               sum(self%worker(iwork)%medium%gvalue_singlet), &
+               sum(self%worker(iwork)%medium%gvalue_triplet)
+       end if
+       write(unit,'("#")')
+
+       write(unit,'("#",11(1x,a20))') 'Energy', 'Stopping Power', 'Degradation (sum)', &
+            'Total Cross Sec. i', 'Total Cross Sec. s', 'Total Cross Sec. t', &
+            'Platzman i', 'Platzman s', 'Platzman t', 'Mean Free Path', 'Range'
+
+       do ie = 1, self%worker(iwork)%egrid%number
+          write(unit,'(1x,11(1x,e20.12))') self%worker(iwork)%egrid%val(ie), &
+               self%worker(iwork)%medium%stop_power(ie), &
+               sum(self%worker(iwork)%medium%degradation_gen(:, ie)), &
+               self%worker(iwork)%medium%total_cross_section_ionize(ie), &
+               self%worker(iwork)%medium%total_cross_section_singlet(ie), &
+               self%worker(iwork)%medium%total_cross_section_triplet(ie), &
+               sum(self%worker(iwork)%medium%platzman_ionize_orbital(:, ie)), &
+               sum(self%worker(iwork)%medium%platzman_singlet_orbital(:, ie)), &
+               sum(self%worker(iwork)%medium%platzman_triplet_orbital(:, ie)), &
+               self%worker(iwork)%medium%mean_free_path(ie), &
+               self%worker(iwork)%medium%range(ie)
+       end do
+       close(unit)
+
+       unit = unit_stdout
+
+       write(unit,*)
+       write(unit,'(1x,a)') ' Yield:'
+       write(unit,'(1x,4(a20))') 'Orbital', 'ionize', 'singlet', 'triplet'
+       do io = 1, self%worker(iwork)%medium%number
+          write(unit,'(1x,15x,i5,3(8x,f12.4))') io, &
+               self%worker(iwork)%medium%yield_ionize(io), &
+               self%worker(iwork)%medium%yield_singlet(io), &
+               self%worker(iwork)%medium%yield_triplet(io)
+       end do
+       if (self%worker(iwork)%medium%number > 1) then
+          write(unit,'(1x,a20,3(8x,f12.4))') 'sum', &
+               sum(self%worker(iwork)%medium%yield_ionize), &
+               sum(self%worker(iwork)%medium%yield_singlet), &
+               sum(self%worker(iwork)%medium%yield_triplet)
+       end if
+
+       write(unit,*)
+       write(unit,'(1x,a)') ' G-value:'
+       write(unit,'(1x,4(a20))') 'Orbital', 'ionize', 'singlet', 'triplet'
+       do io = 1, self%worker(iwork)%medium%number
+          write(unit,'(1x,15x,i5,3(8x,f12.4))') io, &
+               self%worker(iwork)%medium%gvalue_ionize(io), &
+               self%worker(iwork)%medium%gvalue_singlet(io), &
+               self%worker(iwork)%medium%gvalue_triplet(io)
+       end do
+       if (self%worker(iwork)%medium%number > 1) then
+          write(unit,'(1x,a20,3(8x,f12.4))') 'sum', &
+               sum(self%worker(iwork)%medium%gvalue_ionize), &
+               sum(self%worker(iwork)%medium%gvalue_singlet), &
+               sum(self%worker(iwork)%medium%gvalue_triplet)
+       end if
+    end do
+
+    call print_results_degradation(self)
+
+  end subroutine print_results
+
+  subroutine print_results_degradation(self)
+    use mod_file_utils, only: get_unused_unit, unit_stdout
+    use class_grid, only: grid
+    class(work) :: self
+    integer :: iwork
+    integer :: ie, igen, ngen
+    integer :: unit
+    character (len=100) :: file
+
+    do iwork = 1, self%number
+       file = trim(self%worker(iwork)%name)//'_degradation.dat'
+
+       ngen = size(self%worker(iwork)%medium%degradation_gen, 1)
+
+       call get_unused_unit(unit)
+       open(unit, file=trim(file))
+
+       write(unit,'("#",2(1x,a20))', advance='no') 'Energy', 'Degradation (sum)'
+       do igen = 1, ngen
+          write(unit,'(1x, a16, 1x, i3)', advance='no') 'Degradation ', igen
+       end do
+       write(unit,*)
+
+       do ie = 1, self%worker(iwork)%egrid%number
+          write(unit,'(1x,2(1x,e20.12))', advance='no') &
+               self%worker(iwork)%egrid%val(ie), &
+               sum(self%worker(iwork)%medium%degradation_gen(:, ie))
+          do igen = 1, ngen
+             write(unit,'(1x,e20.12)', advance='no') &
+                  self%worker(iwork)%medium%degradation_gen(igen, ie)
+          end do
+          write(unit,*)
+       end do
+       close(unit)
+    end do
+
+  end subroutine print_results_degradation
 
 end module class_work

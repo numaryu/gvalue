@@ -56,7 +56,6 @@ module class_orbital
      procedure :: calculate_stopping_power
      procedure :: calculate_degradation
      procedure :: calculate_yield
-     procedure :: print_results
   end type orbital
 
   ! declare constructor
@@ -432,7 +431,6 @@ contains
   end subroutine calculate_degradation
 
   subroutine calculate_yield(self, egrid)
-    ! use mod_grid, only: egrid
     use class_grid, only: grid
     class(orbital) :: self
     class(grid), intent(in) :: egrid
@@ -624,125 +622,5 @@ contains
     end function indefinite_sigma_Eexc
 
   end function integrate_sigma
-
-  subroutine print_results(self, runname, egrid)
-    use mod_file_utils, only: get_unused_unit, unit_stdout
-    use class_grid, only: grid
-    class(orbital) :: self
-    class(grid), intent(in) ::egrid
-    character (len=*), intent(in) :: runname
-    integer :: io, ie
-    integer :: unit
-    character (len=100) :: file
-
-    file = trim(runname)//'.dat'
-
-    call get_unused_unit(unit)
-    open(unit, file=trim(file))
-
-    write(unit,'("#")')
-    write(unit,'("#",a)') ' Yield:'
-    write(unit,'("#",4(a20))') 'Orbital', 'ionize', 'singlet', 'triplet'
-    do io = 1, self%number
-       write(unit,'("#",15x,i5,3(8x,f12.4))') &
-            io, self%yield_ionize(io), self%yield_singlet(io), self%yield_triplet(io)
-    end do
-    if (self%number > 1) then
-       write(unit,'("#",a20,3(8x,f12.4))') &
-            'sum', sum(self%yield_ionize), sum(self%yield_singlet), sum(self%yield_triplet)
-    end if
-
-    write(unit,'("#")')
-    write(unit,'("#",a)') ' G-value:'
-    write(unit,'("#",4(a20))') 'Orbital', 'ionize', 'singlet', 'triplet'
-    do io = 1, self%number
-       write(unit,'("#",15x,i5,3(8x,f12.4))') &
-            io, self%gvalue_ionize(io), self%gvalue_singlet(io), self%gvalue_triplet(io)
-    end do
-    if (self%number > 1) then
-       write(unit,'("#",a20,3(8x,f12.4))') &
-            'sum', sum(self%gvalue_ionize), sum(self%gvalue_singlet), sum(self%gvalue_triplet)
-    end if
-    write(unit,'("#")')
-
-    write(unit,'("#",11(1x,a20))') 'Energy', 'Stopping Power', 'Degradation (sum)', &
-         'Total Cross Sec. i', 'Total Cross Sec. s', 'Total Cross Sec. t', &
-         'Platzman i', 'Platzman s', 'Platzman t', 'Mean Free Path', 'Range'
-
-    do ie = 1, egrid%number
-       write(unit,'(1x,11(1x,e20.12))') egrid%val(ie), self%stop_power(ie), &
-            sum(self%degradation_gen(:, ie)), &
-            self%total_cross_section_ionize(ie), &
-            self%total_cross_section_singlet(ie), &
-            self%total_cross_section_triplet(ie), &
-            sum(self%platzman_ionize_orbital(:, ie)), &
-            sum(self%platzman_singlet_orbital(:, ie)), &
-            sum(self%platzman_triplet_orbital(:, ie)), &
-            self%mean_free_path(ie), &
-            self%range(ie)
-    end do
-    close(unit)
-
-    unit = unit_stdout
-
-    write(unit,*)
-    write(unit,'(1x,a)') ' Yield:'
-    write(unit,'(1x,4(a20))') 'Orbital', 'ionize', 'singlet', 'triplet'
-    do io = 1, self%number
-       write(unit,'(1x,15x,i5,3(8x,f12.4))') &
-            io, self%yield_ionize(io), self%yield_singlet(io), self%yield_triplet(io)
-    end do
-    if (self%number > 1) then
-       write(unit,'(1x,a20,3(8x,f12.4))') &
-            'sum', sum(self%yield_ionize), sum(self%yield_singlet), sum(self%yield_triplet)
-    end if
-
-    write(unit,*)
-    write(unit,'(1x,a)') ' G-value:'
-    write(unit,'(1x,4(a20))') 'Orbital', 'ionize', 'singlet', 'triplet'
-    do io = 1, self%number
-       write(unit,'(1x,15x,i5,3(8x,f12.4))') &
-            io, self%gvalue_ionize(io), self%gvalue_singlet(io), self%gvalue_triplet(io)
-    end do
-    if (self%number > 1) then
-       write(unit,'(1x,a20,3(8x,f12.4))') &
-            'sum', sum(self%gvalue_ionize), sum(self%gvalue_singlet), sum(self%gvalue_triplet)
-    end if
-
-    call print_results_degradation(self, runname, egrid)
-
-  end subroutine print_results
-
-  subroutine print_results_degradation(self, runname, egrid)
-    use mod_file_utils, only: get_unused_unit, unit_stdout
-    use class_grid, only: grid
-    class(orbital) :: self
-    class(grid), intent(in) :: egrid
-    character (len=*), intent(in) :: runname
-    integer :: ie, igen
-    integer :: unit
-    character (len=100) :: file
-
-    file = trim(runname)//'_degradation.dat'
-
-    call get_unused_unit(unit)
-    open(unit, file=trim(file))
-
-    write(unit,'("#",2(1x,a20))', advance='no') 'Energy', 'Degradation (sum)'
-    do igen = 1, ngen_degradation
-       write(unit,'(1x, a16, 1x, i3)', advance='no') 'Degradation ', igen
-    end do
-    write(unit,*)
-
-    do ie = 1, egrid%number
-       write(unit,'(1x,2(1x,e20.12))', advance='no') egrid%val(ie), sum(self%degradation_gen(:, ie))
-       do igen = 1, ngen_degradation
-          write(unit,'(1x,e20.12)', advance='no') self%degradation_gen(igen, ie)
-       end do
-       write(unit,*)
-    end do
-    close(unit)
-
-  end subroutine print_results_degradation
 
 end module class_orbital
