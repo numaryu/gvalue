@@ -314,7 +314,7 @@ contains
     end function indefinite_E_sigma_Etot
     
     real function indefinite_E_sigma_Edir(x, energy, energy_ionize, energy_kinetic)
-      use mod_constants, only: bb => bb_compat
+      use mod_constants, only: bb
       real, intent(in) :: x
       real, intent(in) :: energy, energy_ionize, energy_kinetic
       real :: val
@@ -327,7 +327,7 @@ contains
     end function indefinite_E_sigma_Edir
 
     real function indefinite_E_sigma_Eexc(x, energy, energy_ionize, energy_kinetic)
-      use mod_constants, only: bb => bb_compat
+      use mod_constants, only: bb
       real, intent(in) :: x
       real, intent(in) :: energy, energy_ionize, energy_kinetic
       real :: val
@@ -347,7 +347,7 @@ contains
   end function integrate_E_sigma
 
   recursive subroutine calculate_degradation(self, egrid, ngen_in)
-    use mod_constants, only: bb => bb_compat
+    use mod_constants, only: bb
     use class_grid, only: grid
     class(orbital) :: self
     class(grid), intent(in) :: egrid
@@ -595,7 +595,7 @@ contains
     end function indefinite_sigma_Etot
 
     real function indefinite_sigma_Edir(x, energy, energy_ionize, energy_kinetic)
-      use mod_constants, only: bb => bb_compat
+      use mod_constants, only: bb
       real, intent(in) :: x
       real, intent(in) :: energy, energy_ionize, energy_kinetic
       real :: val
@@ -608,7 +608,7 @@ contains
     end function indefinite_sigma_Edir
 
     real function indefinite_sigma_Eexc(x, energy, energy_ionize, energy_kinetic)
-      use mod_constants, only: bb => bb_compat
+      use mod_constants, only: bb
       real, intent(in) :: x
       real, intent(in) :: energy, energy_ionize, energy_kinetic
       real :: val
