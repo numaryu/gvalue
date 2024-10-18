@@ -28,4 +28,4 @@ Edit make.conf for your environment.
 # ./gvalue test.in 
 ```
 - Results are stored in `runname`.dat and `runname`_degradation.dat.
-- Sample GNUPLOT script plot_all.gp (in tools) can be used to generate graphs.
+- Sample GNUPLOT script plot_all.gp (in tools) can be used to generate graphs. Change runname and outfile as you like.
