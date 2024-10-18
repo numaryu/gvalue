@@ -211,9 +211,10 @@ contains
     if (associated(self%range)) nullify(self%range)
   end subroutine finish_orbital_vars
 
-  subroutine calculate_stopping_power(self)
-    use mod_grid, only: egrid
+  subroutine calculate_stopping_power(self, egrid)
+    use class_grid, only: grid
     class(orbital) :: self
+    class(grid), intent(in) :: egrid
     integer :: io, ie
     integer :: ne1, ne2, ne3
 
@@ -346,10 +347,11 @@ contains
 
   end function integrate_E_sigma
 
-  recursive subroutine calculate_degradation(self, ngen_in)
+  recursive subroutine calculate_degradation(self, egrid, ngen_in)
     use mod_constants, only: bb => bb_compat
-    use mod_grid, only: egrid
+    use class_grid, only: grid
     class(orbital) :: self
+    class(grid), intent(in) :: egrid
     integer, intent(in), optional :: ngen_in
     integer :: ngen
     real :: energy1, denergy1, energy2, denergy2
@@ -376,7 +378,7 @@ contains
 
     else
 
-       call calculate_degradation(self, ngen-1)
+       call calculate_degradation(self, egrid, ngen-1)
        
        do io = 1, self%number
           energy_ionize = self%energy_ionize(io)
@@ -429,9 +431,11 @@ contains
 
   end subroutine calculate_degradation
 
-  subroutine calculate_yield(self)
-    use mod_grid, only: egrid
+  subroutine calculate_yield(self, egrid)
+    ! use mod_grid, only: egrid
+    use class_grid, only: grid
     class(orbital) :: self
+    class(grid), intent(in) :: egrid
     integer :: io, ie
     integer :: ne1, ne2, ne3
     integer :: ne3_max = 1
@@ -621,15 +625,17 @@ contains
 
   end function integrate_sigma
 
-  subroutine print_results(self)
+  subroutine print_results(self, runname, egrid)
     use mod_file_utils, only: get_unused_unit, unit_stdout
-    use mod_grid, only: egrid
+    use class_grid, only: grid
     class(orbital) :: self
+    class(grid), intent(in) ::egrid
+    character (len=*), intent(in) :: runname
     integer :: io, ie
     integer :: unit
     character (len=100) :: file
 
-    file = 'results.dat'
+    file = trim(runname)//'.dat'
 
     call get_unused_unit(unit)
     open(unit, file=trim(file))
@@ -703,19 +709,21 @@ contains
             'sum', sum(self%gvalue_ionize), sum(self%gvalue_singlet), sum(self%gvalue_triplet)
     end if
 
-    call print_results_degradation(self)
+    call print_results_degradation(self, runname, egrid)
 
   end subroutine print_results
 
-  subroutine print_results_degradation(self)
+  subroutine print_results_degradation(self, runname, egrid)
     use mod_file_utils, only: get_unused_unit, unit_stdout
-    use mod_grid, only: egrid
+    use class_grid, only: grid
     class(orbital) :: self
+    class(grid), intent(in) :: egrid
+    character (len=*), intent(in) :: runname
     integer :: ie, igen
     integer :: unit
     character (len=100) :: file
 
-    file = 'results_degradation.dat'
+    file = trim(runname)//'_degradation.dat'
 
     call get_unused_unit(unit)
     open(unit, file=trim(file))
