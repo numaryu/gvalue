@@ -18,3 +18,14 @@ is rewritten by numaryu into Fortran 2023.
 ```
 
 Edit make.conf for your environment.
+
+## Run
+
+- Place generated executable (gvalue in src) and input file in workdir. The stem of input file (filename without extension) defines the `runname`.
+- Execute the command (`runname` in this case is test).
+```
+# cd ${workdir}
+# ./gvalue test.in 
+```
+- Results are stored in `runname`.dat and `runname`_degradation.dat.
+- Sample GNUPLOT script plot_all.gp (in tools) can be used to generate graphs.
