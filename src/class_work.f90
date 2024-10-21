@@ -83,6 +83,7 @@ contains
       character (len=100) :: file_orbital
       integer :: norbital
       real :: number_density
+      logical :: ex
       namelist /param_orbital/ file_orbital
       namelist /orbital_dim/ norbital
       namelist /param_medium/ number_density
@@ -92,6 +93,9 @@ contains
       read(unit, param_orbital)
       close(unit)
       write(unit_stdout, param_orbital)
+
+      inquire(file=trim(file_orbital), exist = ex)
+      if (.not.ex) stop 'orbital file does not exist!'
 
       call get_unused_unit(unit)
       open(unit, file=trim(file_orbital))
