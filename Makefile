@@ -5,7 +5,7 @@
 
 include make.conf
 
-.PHONY:	all src clean
+.PHONY:	all src tests clean
 
 SUBDIRS	= src
 
@@ -13,3 +13,6 @@ all clean:
 	for dir in $(SUBDIRS); do \
 	  $(MAKE) -C $$dir -f Makefile $@ ;\
 	done
+
+tests:
+	$(MAKE) -C tests -f Makefile $@

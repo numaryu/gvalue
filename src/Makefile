@@ -23,7 +23,7 @@ class_orbital.o: mod_file_utils.o mod_constants.o class_grid.o
 class_work.o: mod_file_utils.o class_orbital.o class_grid.o
 
 clean:
-	rm -f *~
-	rm -f *.o
-	rm -f *.mod
-	rm -f gvalue
+	$(RM) -f *~
+	$(RM) -f *.o
+	$(RM) -f *.mod
+	$(RM) -f gvalue
