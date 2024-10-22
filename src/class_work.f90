@@ -81,12 +81,16 @@ contains
       type(subwork), intent(in out) :: worker
       integer :: unit
       character (len=100) :: file_orbital
-      integer :: norbital
+      integer :: norbital, ngeneration
       real :: number_density
       logical :: ex
-      namelist /param_orbital/ file_orbital
+      namelist /param_orbital/ file_orbital, ngeneration
       namelist /orbital_dim/ norbital
       namelist /param_medium/ number_density
+
+      ! default values
+      norbital = 1
+      ngeneration = 6
 
       call get_unused_unit(unit)
       open(unit, file=trim(worker%name)//'.in')
@@ -105,7 +109,7 @@ contains
       write(unit_stdout, orbital_dim)
       write(unit_stdout, param_medium)
 
-      worker%medium = orbital(norbital, file_orbital)
+      worker%medium = orbital(norbital, ngeneration, file_orbital)
 
       worker%medium%number_density = number_density
     end subroutine init_orbital

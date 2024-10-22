@@ -4,12 +4,12 @@ module class_orbital
 
   public :: orbital
 
-  integer, parameter :: ngen_degradation = 6
-  
   type orbital
      private
      ! number of orbital
      integer, public :: number = 0
+     ! number of generation
+     integer, public :: generation = 0
      ! ionization Ii, kinetic Ei, singlet Esi, triplet Eti energies (per orbital)
      real, pointer, public :: energy_ionize(:) => null(), energy_kinetic(:) => null()
      real, pointer, public :: energy_singlet(:) => null(), energy_triplet(:) => null()
@@ -65,11 +65,12 @@ module class_orbital
 
 contains
 
-  type(orbital) function init_orbital(norbital,file_orbital)
-    integer, intent(in) :: norbital
+  type(orbital) function init_orbital(norbital, ngeneration, file_orbital)
+    integer, intent(in) :: norbital, ngeneration
     character (len=*), intent(in) :: file_orbital
     
     init_orbital%number = norbital
+    init_orbital%generation = ngeneration
 
     if (.not.associated(init_orbital%energy_ionize)) allocate(init_orbital%energy_ionize(norbital))
     if (.not.associated(init_orbital%energy_kinetic)) allocate(init_orbital%energy_kinetic(norbital))
@@ -142,7 +143,7 @@ contains
     if (.not.associated(self%stop_power)) allocate(self%stop_power(ngrid))
 !!!    self%stop_power = 0.0 ! not necessary
 
-    if (.not.associated(self%degradation_gen)) allocate(self%degradation_gen(ngen_degradation, ngrid))
+    if (.not.associated(self%degradation_gen)) allocate(self%degradation_gen(self%generation, ngrid))
     self%degradation_gen = 0.0
 
     if (.not.associated(self%total_cross_section_ionize_orbital)) &
@@ -362,11 +363,11 @@ contains
     integer :: nenergy1_max, nenergy2_max
 
     if (.not.present(ngen_in)) then
-       ngen = ngen_degradation
+       ngen = self%generation
     else
        ngen = ngen_in
     end if
-    
+
     nenergy_max = egrid%grid_number(minval(self%energy_triplet))
 
     if (ngen == 1) then
