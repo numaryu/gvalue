@@ -24,10 +24,16 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install pytest numpy
+        pip install pytest numpy scipy
 
     - name: Build
       run: make
 
     - name: Test
       run: make tests
+
+    # テスト結果をGitHub上で表示する
+    - name: Display results
+      uses: EnricoMi/publish-unit-test-result-action@v1
+      with:
+        files: tests/*/*.xml      
