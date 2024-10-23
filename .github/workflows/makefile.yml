@@ -7,7 +7,7 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build_and_test:
+  Build_and_Test:
 
     runs-on: ubuntu-latest
 
@@ -51,7 +51,7 @@ jobs:
         path: artifacts
 
     # テスト結果をGitHub上で表示する
-    - name: display results
+    - name: Display results
       uses: EnricoMi/publish-unit-test-result-action@v2
       with:
         files: artifacts/**/*.xml
