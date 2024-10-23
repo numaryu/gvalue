@@ -25,7 +25,7 @@ run:
 	$(LN) -s $(PARAMDIR)/$(PARAM)
 
 	./$(BIN) $(INPUT)
-	pytest
+	pytest -s -v
 
 clean:
 	$(RM) -f *~
