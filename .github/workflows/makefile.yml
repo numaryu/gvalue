@@ -32,8 +32,22 @@ jobs:
     - name: Test
       run: make tests
 
-    # テスト結果をGitHub上で表示する
-    - name: Display results
-      uses: EnricoMi/publish-unit-test-result-action@v1
+    # テスト結果をアップロードする
+    - name: Upload results
+      uses: actions/upload-artifact@v4
       with:
-        files: tests/*/*.xml      
+        name: test_results
+        path: tests/*/*.xml
+
+    # テスト結果をダウンロードする
+    - name: Download results
+      uses: actions/download-artifact@v4
+      with:
+        name: test_results
+        path: artifacts
+
+    # テスト結果をGitHub上で表示する
+    - name: display results
+      uses: EnricoMi/publish-unit-test-result-action@v2
+      with:
+        files: artifacts/**/*.xml
