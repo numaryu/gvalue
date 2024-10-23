@@ -12,7 +12,8 @@ jobs:
     runs-on: ubuntu-latest
 
     permissions:
-      contents: write
+      checks: write
+      pull-requests: write
 
     steps: 
     - uses: actions/checkout@v4
@@ -51,9 +52,6 @@ jobs:
 
     # テスト結果をGitHub上で表示する
     - name: display results
-      uses: GitHubSecurityLab/actions-permissions/monitor@v1
-      with:
-        config: ${{ vars.PERMISSIONS_CONFIG }}   
       uses: EnricoMi/publish-unit-test-result-action@v2
       with:
         files: artifacts/**/*.xml
