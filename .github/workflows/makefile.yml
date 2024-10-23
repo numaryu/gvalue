@@ -31,3 +31,9 @@ jobs:
 
     - name: Test
       run: make tests
+
+    # テスト結果をGitHub上で表示する
+    - name: Display results
+      uses: EnricoMi/publish-unit-test-result-action@v1
+      with:
+        files: tests/*/*.xml      
