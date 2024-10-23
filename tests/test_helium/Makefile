@@ -3,6 +3,8 @@ include ../make_test.conf
 
 .PHONY: run clean
 
+TEST_NAME = test_helium
+
 BIN	= gvalue
 BINDIR	= ../../src/
 PARAMDIR = ../../parameters
@@ -25,7 +27,7 @@ run:
 	$(LN) -s $(PARAMDIR)/$(PARAM)
 
 	./$(BIN) $(INPUT)
-	pytest -s -v
+	pytest -s -v --junit-xml $(TEST_NAME).xml
 
 clean:
 	$(RM) -f *~
