@@ -1,4 +1,5 @@
 &param_orbital
+ ngeneration = 4
  file_orbital = "helium_nml.in"
 /
 
