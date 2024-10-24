@@ -9,10 +9,12 @@ include make.conf
 
 SUBDIRS	= src
 
-all clean:
+all:	src
+
+src clean:
 	for dir in $(SUBDIRS); do \
 	  $(MAKE) -C $$dir -f Makefile $@ ;\
 	done
 
-tests:
+tests: src
 	$(MAKE) -C tests -f Makefile $@

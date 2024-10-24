@@ -11,7 +11,8 @@ include	../make.conf
 .f90.o:
 	$(FC) $(INC) $(F90FLAGS) -c -o $@ $<
 
-all:	gvalue
+all:	src
+src:	gvalue
 
 gvalue:	gvalue.o mod_constants.o mod_file_utils.o
 gvalue: class_grid.o class_orbital.o class_work.o
