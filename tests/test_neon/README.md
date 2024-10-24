@@ -1,6 +1,6 @@
 # test_neon
 
-This test is to chack calculations of total cross sections, G values,
+This test is to check calculations of total cross sections, G values,
 mean free path with more than one orbital medium.
 
 We use the paraters of Neon gas and only consider 1 generations of 
