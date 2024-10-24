@@ -6,7 +6,7 @@ include ../make.conf
 
 .PHONY: tests
 
-SUBDIRS = test_helium
+SUBDIRS = test_helium test_neon
 
 tests:
 	for dir in $(SUBDIRS); do \
