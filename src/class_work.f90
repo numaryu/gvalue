@@ -240,6 +240,7 @@ contains
     end do
 
     call print_results_degradation(self)
+    call print_results_gvalue(self)
 
   end subroutine print_results
 
@@ -280,5 +281,24 @@ contains
     end do
 
   end subroutine print_results_degradation
+
+  subroutine print_results_gvalue(self)
+    use mod_file_utils, only: get_unused_unit, unit_stdout
+    class(work) :: self
+    integer :: iwork
+    character (len=100) :: file
+    integer :: unit
+    do iwork = 1, self%number
+       file = trim(self%worker(iwork)%name)//'_gvalue.dat'
+       call get_unused_unit(unit)
+       open(unit, file=trim(file))
+       write(unit,'("#",3(1x,a20))') 'ionize', 'singlet', 'triplet'
+       write(unit,'(1x,3(1x,e20.12))') &
+            sum(self%worker(iwork)%medium%gvalue_ionize), &
+            sum(self%worker(iwork)%medium%gvalue_singlet), &
+            sum(self%worker(iwork)%medium%gvalue_triplet)
+       close(unit)
+    end do
+  end subroutine print_results_gvalue
 
 end module class_work
