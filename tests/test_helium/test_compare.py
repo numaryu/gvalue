@@ -2,8 +2,8 @@ import pytest
 import numpy as np
 import scipy.interpolate as interpolate
 
-eps = 1.e-6
-eps2 = 1.e-3
+eps_stoppow = 1.e-6
+eps_degradation = 1.e-3
 
 def test_stoppow():
     test_helium = np.loadtxt("test_helium.dat")
@@ -38,7 +38,7 @@ def test_stoppow():
     rms = np.sqrt(np.ma.mean(madiff))
 
     # print(rms)
-    assert rms < eps
+    assert rms < eps_stoppow
 
 def test_degradation():
     ngen = 4
@@ -97,6 +97,7 @@ def test_degradation():
     # print(rms)
     for i in range(ngen):
         if i == 0:
-            assert rms[i] < eps
+            # for this case, degradation is inverse of stoppow
+            assert rms[i] < eps_stoppow
         else:
-            assert rms[i] < eps2
+            assert rms[i] < eps_degradation
