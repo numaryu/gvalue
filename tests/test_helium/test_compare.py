@@ -2,7 +2,8 @@ import pytest
 import numpy as np
 import scipy.interpolate as interpolate
 
-eps = 1.e-5
+eps = 1.e-6
+eps2 = 1.e-3
 
 def test_stoppow():
     test_helium = np.loadtxt("test_helium.dat")
@@ -34,7 +35,7 @@ def test_stoppow():
     madiff = np.ma.array((stoppow_result_interp(egrid_check) - \
                           stoppow_data_interp(egrid_check))**2,
                          mask = egrid_check < energy_min)
-    rms = np.ma.mean(madiff)
+    rms = np.sqrt(np.ma.mean(madiff))
 
     # print(rms)
     assert rms < eps
@@ -91,8 +92,11 @@ def test_degradation():
                               deggen_data_interp[i](egrid_check))**2,
                              mask = np.any([egrid_check < energy_min[i],
                                             egrid_check > energy_max[i]], axis=0))
-        rms.append(np.ma.mean(madiff))
+        rms.append(np.sqrt(np.ma.mean(madiff)))
 
     # print(rms)
     for i in range(ngen):
-        assert rms[i] < eps
+        if i == 0:
+            assert rms[i] < eps
+        else:
+            assert rms[i] < eps2
