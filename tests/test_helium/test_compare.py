@@ -14,7 +14,7 @@ def test_stoppow():
     energy_min_result = egrid_result[np.min(np.where(stoppow_result != 0))]
 
     # data from WolframEngine
-    stoppow = np.loadtxt("stoppow.dat")
+    stoppow = np.loadtxt("stoppow_helium.dat")
     egrid_data = stoppow[:, 0]
     stoppow_data = stoppow[:, 1]
     stoppow_data_interp = interpolate.CubicSpline(egrid_data, stoppow_data)
@@ -59,7 +59,7 @@ def test_degradation():
         deggen_result_interp.append(interpolate.CubicSpline(egrid_result, deggen_result[:, i]))
 
     # data from WolframEngine
-    degradation = np.loadtxt("degradation.dat")
+    degradation = np.loadtxt("degradation_helium.dat")
     egrid_data = degradation[:, 0]
     deggen_data = degradation[:, 1:1+ngen]
 
