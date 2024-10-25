@@ -1,4 +1,4 @@
-# G Value calculation program
+# G value calculation program
 
 Ionization and singlet and triplet excitations.
 
