@@ -152,39 +152,10 @@ contains
        call get_unused_unit(unit)
        open(unit, file=trim(file))
 
-       write(unit,'("#")')
-       write(unit,'("#",a)') ' Yield:'
-       write(unit,'("#",4(a20))') 'Orbital', 'ionize', 'singlet', 'triplet'
-       do io = 1, self%worker(iwork)%medium%number
-          write(unit,'("#",15x,i5,3(8x,f12.4))') io, &
-               self%worker(iwork)%medium%yield_ionize(io), &
-               self%worker(iwork)%medium%yield_singlet(io), &
-               self%worker(iwork)%medium%yield_triplet(io)
-       end do
-       if (self%worker(iwork)%medium%number > 1) then
-          write(unit,'("#",a20,3(8x,f12.4))') 'sum', &
-               sum(self%worker(iwork)%medium%yield_ionize), &
-               sum(self%worker(iwork)%medium%yield_singlet), &
-               sum(self%worker(iwork)%medium%yield_triplet)
-       end if
+       call print_yield(unit)
+       call print_gvalue(unit)
 
        write(unit,'("#")')
-       write(unit,'("#",a)') ' G-value:'
-       write(unit,'("#",4(a20))') 'Orbital', 'ionize', 'singlet', 'triplet'
-       do io = 1, self%worker(iwork)%medium%number
-          write(unit,'("#",15x,i5,3(8x,f12.4))') io, &
-               self%worker(iwork)%medium%gvalue_ionize(io), &
-               self%worker(iwork)%medium%gvalue_singlet(io), &
-               self%worker(iwork)%medium%gvalue_triplet(io)
-       end do
-       if (self%worker(iwork)%medium%number > 1) then
-          write(unit,'("#",a20,3(8x,f12.4))') 'sum', &
-               sum(self%worker(iwork)%medium%gvalue_ionize), &
-               sum(self%worker(iwork)%medium%gvalue_singlet), &
-               sum(self%worker(iwork)%medium%gvalue_triplet)
-       end if
-       write(unit,'("#")')
-
        write(unit,'("#",11(1x,a20))') 'Energy', 'Stopping Power', 'Degradation (sum)', &
             'Total Cross Sec. i', 'Total Cross Sec. s', 'Total Cross Sec. t', &
             'Platzman i', 'Platzman s', 'Platzman t', 'Mean Free Path', 'Range'
@@ -206,41 +177,68 @@ contains
 
        unit = unit_stdout
 
-       write(unit,*)
-       write(unit,'(1x,a)') ' Yield:'
-       write(unit,'(1x,4(a20))') 'Orbital', 'ionize', 'singlet', 'triplet'
-       do io = 1, self%worker(iwork)%medium%number
-          write(unit,'(1x,15x,i5,3(8x,f12.4))') io, &
-               self%worker(iwork)%medium%yield_ionize(io), &
-               self%worker(iwork)%medium%yield_singlet(io), &
-               self%worker(iwork)%medium%yield_triplet(io)
-       end do
-       if (self%worker(iwork)%medium%number > 1) then
-          write(unit,'(1x,a20,3(8x,f12.4))') 'sum', &
-               sum(self%worker(iwork)%medium%yield_ionize), &
-               sum(self%worker(iwork)%medium%yield_singlet), &
-               sum(self%worker(iwork)%medium%yield_triplet)
-       end if
-
-       write(unit,*)
-       write(unit,'(1x,a)') ' G-value:'
-       write(unit,'(1x,4(a20))') 'Orbital', 'ionize', 'singlet', 'triplet'
-       do io = 1, self%worker(iwork)%medium%number
-          write(unit,'(1x,15x,i5,3(8x,f12.4))') io, &
-               self%worker(iwork)%medium%gvalue_ionize(io), &
-               self%worker(iwork)%medium%gvalue_singlet(io), &
-               self%worker(iwork)%medium%gvalue_triplet(io)
-       end do
-       if (self%worker(iwork)%medium%number > 1) then
-          write(unit,'(1x,a20,3(8x,f12.4))') 'sum', &
-               sum(self%worker(iwork)%medium%gvalue_ionize), &
-               sum(self%worker(iwork)%medium%gvalue_singlet), &
-               sum(self%worker(iwork)%medium%gvalue_triplet)
-       end if
+       call print_yield(unit)
+       call print_gvalue(unit)
     end do
 
     call print_results_degradation(self)
     call print_results_gvalue(self)
+
+  contains
+
+    subroutine print_yield(unit)
+      integer, intent(in) :: unit
+
+      write(unit,'("#")')
+      write(unit,'("#",a)') ' Yield:'
+      write(unit,'("#",8(a20))') 'Orbital', 'ionize', 'singlet', 'triplet', &
+           'Energy i', 'Energy s', 'Energy t'
+
+      do io = 1, self%worker(iwork)%medium%number
+         write(unit,'("#",15x,i5,7(8x,f12.4))') io, &
+              self%worker(iwork)%medium%yield_ionize(io), &
+              self%worker(iwork)%medium%yield_singlet(io), &
+              self%worker(iwork)%medium%yield_triplet(io), &
+              self%worker(iwork)%medium%energy_ionize(io), &
+              self%worker(iwork)%medium%energy_singlet(io), &
+              self%worker(iwork)%medium%energy_triplet(io)
+      end do
+
+      if (self%worker(iwork)%medium%number > 1) then
+         write(unit,'("#",a20,3(8x,f12.4))') 'sum', &
+              sum(self%worker(iwork)%medium%yield_ionize), &
+              sum(self%worker(iwork)%medium%yield_singlet), &
+              sum(self%worker(iwork)%medium%yield_triplet)
+      end if
+
+    end subroutine print_yield
+
+    subroutine print_gvalue(unit)
+      integer, intent(in) :: unit
+
+      write(unit,'("#")')
+      write(unit,'("#",a)') ' G-value:'
+      write(unit,'("#",7(a20))') 'Orbital', 'ionize', 'singlet', 'triplet', &
+           'Energy i', 'Energy s', 'Energy t'
+
+      do io = 1, self%worker(iwork)%medium%number
+         write(unit,'("#",15x,i5,7(8x,f12.4))') io, &
+              self%worker(iwork)%medium%gvalue_ionize(io), &
+              self%worker(iwork)%medium%gvalue_singlet(io), &
+              self%worker(iwork)%medium%gvalue_triplet(io), &
+              self%worker(iwork)%medium%energy_ionize(io), &
+              self%worker(iwork)%medium%energy_singlet(io), &
+              self%worker(iwork)%medium%energy_triplet(io)
+      end do
+
+      if (self%worker(iwork)%medium%number > 1) then
+         write(unit,'("#",a20,3(8x,f12.4))') 'sum', &
+              sum(self%worker(iwork)%medium%gvalue_ionize), &
+              sum(self%worker(iwork)%medium%gvalue_singlet), &
+              sum(self%worker(iwork)%medium%gvalue_triplet)
+      end if
+
+    end subroutine print_gvalue
 
   end subroutine print_results
 
