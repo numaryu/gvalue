@@ -191,11 +191,11 @@ contains
 
       write(unit,'("#")')
       write(unit,'("#",a)') ' Yield:'
-      write(unit,'("#",8(a20))') 'Orbital', 'ionize', 'singlet', 'triplet', &
+      write(unit,'("#",7(a20))') 'Orbital', 'ionize', 'singlet', 'triplet', &
            'Energy i', 'Energy s', 'Energy t'
 
       do io = 1, self%worker(iwork)%medium%number
-         write(unit,'("#",15x,i5,7(8x,f12.4))') io, &
+         write(unit,'("#",15x,i5,6(8x,f12.4))') io, &
               self%worker(iwork)%medium%yield_ionize(io), &
               self%worker(iwork)%medium%yield_singlet(io), &
               self%worker(iwork)%medium%yield_triplet(io), &
@@ -222,7 +222,7 @@ contains
            'Energy i', 'Energy s', 'Energy t'
 
       do io = 1, self%worker(iwork)%medium%number
-         write(unit,'("#",15x,i5,7(8x,f12.4))') io, &
+         write(unit,'("#",15x,i5,6(8x,f12.4))') io, &
               self%worker(iwork)%medium%gvalue_ionize(io), &
               self%worker(iwork)%medium%gvalue_singlet(io), &
               self%worker(iwork)%medium%gvalue_triplet(io), &
