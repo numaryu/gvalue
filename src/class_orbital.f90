@@ -512,12 +512,31 @@ contains
             sum(self%degradation_gen, dim=1) * &
             self%total_cross_section_triplet_orbital(io, :)
 
-       self%yield_ionize(io) = sum(self%platzman_ionize_orbital(io, :)) &
-            - 0.5*self%platzman_ionize_orbital(io, 1)
-       self%yield_singlet(io) = sum(self%platzman_singlet_orbital(io, :)) &
-            - 0.5*self%platzman_singlet_orbital(io, 1)
-       self%yield_triplet(io) = sum(self%platzman_triplet_orbital(io, :)) &
-            - 0.5*self%platzman_triplet_orbital(io, 1)
+       ! integrate over energy
+       ! minus sign is because the energy grid is in the descending order
+       self%yield_ionize(io) = (-log(egrid%div)) * &
+            ( sum(self%platzman_ionize_orbital(io, :)) &
+            - 0.5*self%platzman_ionize_orbital(io, 1) )
+
+       if (self%energy_singlet(io) < minval(self%energy_ionize)) then
+          self%yield_singlet(io) = (-log(egrid%div)) * &
+               ( sum(self%platzman_singlet_orbital(io, :)) &
+               - 0.5*self%platzman_singlet_orbital(io, 1) )
+       else
+          self%yield_ionize(io) = self%yield_ionize(io) + (-log(egrid%div)) * &
+               ( sum(self%platzman_singlet_orbital(io, :)) &
+               - 0.5*self%platzman_singlet_orbital(io, 1) )
+       end if
+
+       if (self%energy_triplet(io) < minval(self%energy_ionize)) then
+          self%yield_triplet(io) = (-log(egrid%div)) * &
+               ( sum(self%platzman_triplet_orbital(io, :)) &
+               - 0.5*self%platzman_triplet_orbital(io, 1) )
+       else
+          self%yield_ionize(io) = self%yield_ionize(io) + (-log(egrid%div)) * &
+               ( sum(self%platzman_triplet_orbital(io, :)) &
+               - 0.5*self%platzman_triplet_orbital(io, 1) )
+       end if
     end do
 
     self%mean_free_path = self%number_density*( &
@@ -535,11 +554,9 @@ contains
        self%range(ie) = self%range(ie+1) + self%range(ie)
     end do
 
-    ! integrate over energy
-    ! minus sign is because the energy grid is in the descending order
-    self%yield_ionize = self%number_electrons * self%number_density * self%yield_ionize * (-log(egrid%div))
-    self%yield_singlet = self%number_electrons * self%number_density * self%yield_singlet * (-log(egrid%div))
-    self%yield_triplet = self%number_electrons * self%number_density * self%yield_triplet * (-log(egrid%div))
+    self%yield_ionize = self%number_electrons * self%number_density * self%yield_ionize
+    self%yield_singlet = self%number_electrons * self%number_density * self%yield_singlet
+    self%yield_triplet = self%number_electrons * self%number_density * self%yield_triplet
 
     self%gvalue_ionize = 100. * self%yield_ionize/egrid%val_max
     self%gvalue_singlet = 100. * self%yield_singlet/egrid%val_max
