@@ -83,14 +83,16 @@ contains
       character (len=100) :: file_orbital
       integer :: norbital, ngeneration
       real :: number_density
+      character (len=100) :: name
       logical :: ex
       namelist /param_orbital/ file_orbital, ngeneration
       namelist /orbital_dim/ norbital
-      namelist /param_medium/ number_density
+      namelist /param_medium/ number_density, name
 
       ! default values
       norbital = 1
       ngeneration = 6
+      name = 'unknown'
 
       call get_unused_unit(unit)
       open(unit, file=trim(worker%name)//'.in')
@@ -112,6 +114,7 @@ contains
       worker%medium = orbital(norbital, ngeneration, file_orbital)
 
       worker%medium%number_density = number_density
+      worker%medium%name = name
     end subroutine init_orbital
 
     subroutine init_grid(worker)
@@ -152,6 +155,9 @@ contains
        call get_unused_unit(unit)
        open(unit, file=trim(file))
 
+       write(unit,'("#")')
+       write(unit,'("#",1x 2a)') 'Media: ', trim(self%worker(iwork)%medium%name)
+       write(unit,'("#")')
        call print_yield(unit)
        call print_gvalue(unit)
 

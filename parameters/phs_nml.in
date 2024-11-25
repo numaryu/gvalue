@@ -4,6 +4,7 @@
 
 &param_medium
  number_density = 6.02e21
+ name = 'PHS'
 /
 
 ! T. Ueno, J. Photopolym. Sci. Tech 37, 305 (2024).

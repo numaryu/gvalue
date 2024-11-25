@@ -6,6 +6,8 @@ module class_orbital
 
   type orbital
      private
+     ! name of medium
+     character (len=100), public :: name = 'unknown'
      ! number of orbital
      integer, public :: number = 0
      ! number of generation

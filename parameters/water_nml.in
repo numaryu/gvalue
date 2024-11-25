@@ -4,6 +4,7 @@
 
 &param_medium
  number_density = 0.26875e20
+ name = 'water'
 /
 
 ! K. Okazaki et al Bull. Chem. Soc. JPN 49, 174 (1976).

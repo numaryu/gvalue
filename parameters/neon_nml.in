@@ -4,6 +4,7 @@
 
 &param_medium
  number_density = 0.26875e20
+ name = 'neon'
 /
 
 ! S. Sato et al Bull. Chem. Soc. JPN 47, 2174 (1974).
