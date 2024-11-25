@@ -48,7 +48,9 @@ module class_orbital
      real, pointer, public :: mean_free_path(:) => null()
 
      ! range
-     real, pointer, public :: range(:) => null()
+     real, pointer, public :: range_ionize(:) => null()
+     real, pointer, public :: range_singlet(:) => null()
+     real, pointer, public :: range_triplet(:) => null()
 
    contains
      final :: destroy
@@ -179,8 +181,12 @@ contains
     if (.not.associated(self%mean_free_path)) allocate(self%mean_free_path(ngrid))
     self%mean_free_path = 0.0
 
-    if (.not.associated(self%range)) allocate(self%range(ngrid))
-    self%range = 0.0
+    if (.not.associated(self%range_ionize)) allocate(self%range_ionize(ngrid))
+    if (.not.associated(self%range_singlet)) allocate(self%range_singlet(ngrid))
+    if (.not.associated(self%range_triplet)) allocate(self%range_triplet(ngrid))
+    self%range_ionize = 0.0
+    self%range_singlet = 0.0
+    self%range_triplet = 0.0
 
   end subroutine init_orbital_vars
 
@@ -208,7 +214,9 @@ contains
 
     if (associated(self%mean_free_path)) nullify(self%mean_free_path)
 
-    if (associated(self%range)) nullify(self%range)
+    if (associated(self%range_ionize)) nullify(self%range_ionize)
+    if (associated(self%range_singlet)) nullify(self%range_singlet)
+    if (associated(self%range_triplet)) nullify(self%range_triplet)
   end subroutine finish_orbital_vars
 
   subroutine calculate_stopping_power(self, egrid)
@@ -437,12 +445,14 @@ contains
     class(grid), intent(in) :: egrid
     integer :: io, ie
     integer :: ne1, ne2, ne3
-    integer :: ne3_max = 1
+    integer :: ne1_max = 1, ne2_max = 1, ne3_max = 1
+    real :: t_over_s(egrid%number)
 
     do io = 1, self%number
 
        if (self%energy_ionize(io) < egrid%val_max) then
           ne1 = egrid%grid_number(self%energy_ionize(io))
+          if (ne1 > ne1_max) ne1_max = ne1
 
           ! energy >=  energy_ionize
           do ie = 1, ne1
@@ -466,6 +476,7 @@ contains
 
        if (self%energy_singlet(io) < egrid%val_max) then
           ne2 = egrid%grid_number(self%energy_singlet(io))
+          if (ne2 > ne2_max) ne2_max = ne2
 
           ! energy_ionize > energy >=  energy_singlet
           do ie = ne1+1, ne2
@@ -548,10 +559,17 @@ contains
     end where
 
     where (self%stop_power /= 0.)
-       self%range(:) = egrid%val(:) / self%stop_power(:) * (-log(egrid%div))
+       t_over_s = egrid%val(:) / self%stop_power(:) * (-log(egrid%div))
     end where
-    do ie = ne3_max-1, 1, -1
-       self%range(ie) = self%range(ie+1) + self%range(ie)
+
+    do ie = ne3_max, 1, -1
+       self%range_triplet(ie) = self%range_triplet(ie+1) + t_over_s(ie)
+    end do
+    do ie = ne2_max, 1, -1
+       self%range_singlet(ie) = self%range_singlet(ie+1) + t_over_s(ie)
+    end do
+    do ie = ne1_max, 1, -1
+       self%range_ionize(ie) = self%range_ionize(ie+1) + t_over_s(ie)
     end do
 
     self%yield_ionize = self%number_electrons * self%number_density * self%yield_ionize

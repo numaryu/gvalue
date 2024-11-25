@@ -135,4 +135,10 @@ factor_cm_to_nm=1.e7
 plot \
 	file_result u 1:($11*factor_cm_to_nm) w l \
 	lw 4 lc 1 \
-	title "", \
+	title "Ionization", \
+	file_result u 1:($12*factor_cm_to_nm) w l \
+	lw 4 lc 2 \
+	title "Singlet", \
+	file_result u 1:($13*factor_cm_to_nm) w l \
+	lw 4 lc 3 \
+	title "Triplet", \

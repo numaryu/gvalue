@@ -156,12 +156,12 @@ contains
        call print_gvalue(unit)
 
        write(unit,'("#")')
-       write(unit,'("#",11(1x,a20))') 'Energy', 'Stopping Power', 'Degradation (sum)', &
+       write(unit,'("#",13(1x,a20))') 'Energy', 'Stopping Power', 'Degradation (sum)', &
             'Total Cross Sec. i', 'Total Cross Sec. s', 'Total Cross Sec. t', &
-            'Platzman i', 'Platzman s', 'Platzman t', 'Mean Free Path', 'Range'
+            'Platzman i', 'Platzman s', 'Platzman t', 'Mean Free Path', 'Range i', 'Range s', 'Range t'
 
        do ie = 1, self%worker(iwork)%egrid%number
-          write(unit,'(1x,11(1x,e20.12))') self%worker(iwork)%egrid%val(ie), &
+          write(unit,'(1x,13(1x,e20.12))') self%worker(iwork)%egrid%val(ie), &
                self%worker(iwork)%medium%stop_power(ie), &
                sum(self%worker(iwork)%medium%degradation_gen(:, ie)), &
                self%worker(iwork)%medium%total_cross_section_ionize(ie), &
@@ -171,7 +171,9 @@ contains
                sum(self%worker(iwork)%medium%platzman_singlet_orbital(:, ie)), &
                sum(self%worker(iwork)%medium%platzman_triplet_orbital(:, ie)), &
                self%worker(iwork)%medium%mean_free_path(ie), &
-               self%worker(iwork)%medium%range(ie)
+               self%worker(iwork)%medium%range_ionize(ie), &
+               self%worker(iwork)%medium%range_singlet(ie), &
+               self%worker(iwork)%medium%range_triplet(ie)
        end do
        close(unit)
 
