@@ -12,7 +12,7 @@ PARAM	= neon_nml.in
 INPUT	= test_neon.in
 
 DATAFILE = $(shell echo $(INPUT) | sed "s/.in/\.dat/")
-DATAFILE += $(shell echo $(INPUT) | sed "s/.in/\_degradation.dat/")
+DATAFILE += $(shell echo $(INPUT) | sed "s/.in/\_degradation*.dat/")
 DATAFILE += $(shell echo $(INPUT) | sed "s/.in/\_gvalue.dat/")
 
 all:	run clean

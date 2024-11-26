@@ -359,11 +359,13 @@ contains
 
   end function integrate_E_sigma
 
-  recursive subroutine calculate_degradation(self, egrid, ngen)
+  recursive subroutine calculate_degradation(self, egrid, mediamix, ngen)
     use mod_constants, only: bb
     use class_grid, only: grid
+    use class_mixture, only: mixture
     class(orbital) :: self
     class(grid), intent(in) :: egrid
+    class(mixture), intent(in) :: mediamix
     integer, intent(in) :: ngen
     real :: energy1, denergy1, energy2, denergy2
     real :: energy_ionize, energy_kinetic
@@ -377,13 +379,13 @@ contains
 
     if (ngen == 1) then
 
-       where(self%stop_power /= 0.)
-          self%degradation_gen(1, :) = 1./self%stop_power(:)
+       where(mediamix%stop_power_mixture /= 0.)
+          self%degradation_gen(1, :) = 1./mediamix%stop_power_mixture(:)
        end where
 
     else
 
-       call calculate_degradation(self, egrid, ngen-1)
+       call calculate_degradation(self, egrid, mediamix, ngen-1)
        
        do io = 1, self%number
           energy_ionize = self%energy_ionize(io)
@@ -427,8 +429,8 @@ contains
           self%degradation_gen(ngen, i) = self%degradation_gen(ngen, i-1) &
                + self%degradation_gen(ngen,i)
        end do
-       where (self%stop_power /= 0.)
-          self%degradation_gen(ngen, :) = self%degradation_gen(ngen, :)/self%stop_power(:)
+       where (mediamix%stop_power_mixture /= 0.)
+          self%degradation_gen(ngen, :) = self%degradation_gen(ngen, :)/mediamix%stop_power_mixture(:)
        end where
     end if
 
@@ -436,10 +438,12 @@ contains
 
   end subroutine calculate_degradation
 
-  subroutine calculate_yield(self, egrid)
+  subroutine calculate_yield(self, egrid, mediamix)
     use class_grid, only: grid
+    use class_mixture, only: mixture
     class(orbital) :: self
     class(grid), intent(in) :: egrid
+    class(mixture), intent(in) :: mediamix
     integer :: io, ie
     integer :: ne1, ne2, ne3
     integer :: ne1_max = 1, ne2_max = 1, ne3_max = 1
@@ -511,13 +515,13 @@ contains
 
     do io = 1, self%number
        self%platzman_ionize_orbital(io, :) = egrid%val * &
-            sum(self%degradation_gen, dim=1) * &
+            mediamix%degradation_mixture * &
             self%total_cross_section_ionize_orbital(io, :)
        self%platzman_singlet_orbital(io, :) = egrid%val * &
-            sum(self%degradation_gen, dim=1) * &
+            mediamix%degradation_mixture * &
             self%total_cross_section_singlet_orbital(io, :)
        self%platzman_triplet_orbital(io, :) = egrid%val * &
-            sum(self%degradation_gen, dim=1) * &
+            mediamix%degradation_mixture * &
             self%total_cross_section_triplet_orbital(io, :)
 
        ! integrate over energy

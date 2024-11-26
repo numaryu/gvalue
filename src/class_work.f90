@@ -1,6 +1,7 @@
 module class_work
   use class_orbital, only: orbital
   use class_grid, only: grid
+  use class_mixture, only: mixture
   implicit none
   private
 
@@ -21,6 +22,7 @@ module class_work
      integer :: nmedia, ngeneration
      type(orbital), pointer :: medium(:) => null()
      type(grid) :: egrid
+     type(mixture) :: mediamix
   end type subwork
 
   ! declare constructor
@@ -62,19 +64,46 @@ contains
   subroutine execute(self)
     class(work) :: self
     integer :: iwork, imedia
+    real, allocatable :: stop_power(:,:), degradation(:,:), number_density(:,:)
     do iwork = 1, self%number
        write(6,'(/1x,a,i0,a,a/)') '=====> WORK ', iwork, ': ',self%worker(iwork)%name
 
        call init_subwork(self%worker(iwork))
 
+       if (.not.allocated(stop_power)) allocate( &
+            stop_power(self%worker(iwork)%nmedia, self%worker(iwork)%egrid%number))
+       if (.not.allocated(degradation)) allocate( &
+            degradation(self%worker(iwork)%nmedia, self%worker(iwork)%egrid%number))
+       if (.not.allocated(number_density)) allocate( &
+            number_density(self%worker(iwork)%nmedia,self%worker(iwork)%egrid%number))
+
        do imedia = 1, self%worker(iwork)%nmedia
           call self%worker(iwork)%medium(imedia)%init_orbital_vars(self%worker(iwork)%egrid%number, &
                self%worker(iwork)%ngeneration)
           call self%worker(iwork)%medium(imedia)%calculate_stopping_power(self%worker(iwork)%egrid)
-          call self%worker(iwork)%medium(imedia)%calculate_degradation(self%worker(iwork)%egrid, &
-               self%worker(iwork)%ngeneration)
-          call self%worker(iwork)%medium(imedia)%calculate_yield(self%worker(iwork)%egrid)
+
+          stop_power(imedia,:) = self%worker(iwork)%medium(imedia)%stop_power
+          number_density(imedia,:) = self%worker(iwork)%medium(imedia)%number_density
        end do
+
+       call calculate_mixture(stop_power, number_density, self%worker(iwork)%mediamix%stop_power_mixture)
+
+       do imedia = 1, self%worker(iwork)%nmedia
+          call self%worker(iwork)%medium(imedia)%calculate_degradation(self%worker(iwork)%egrid, &
+               self%worker(iwork)%mediamix, self%worker(iwork)%ngeneration)
+          degradation(imedia,:) = sum(self%worker(iwork)%medium(imedia)%degradation_gen(:,:), dim=1)
+       end do
+
+       call calculate_mixture(degradation, number_density, self%worker(iwork)%mediamix%degradation_mixture)
+
+       do imedia = 1, self%worker(iwork)%nmedia
+          call self%worker(iwork)%medium(imedia)%calculate_yield(self%worker(iwork)%egrid, &
+               self%worker(iwork)%mediamix)
+       end do
+
+       if (allocated(stop_power)) deallocate(stop_power)
+       if (allocated(degradation)) deallocate(degradation)
+       if (allocated(number_density)) deallocate(number_density)
 
        write(6,'(/1x,a,i0,a/)') '=====> WORK ', iwork, ': done'
     end do
@@ -104,6 +133,7 @@ contains
 
       call init_orbital(worker)
       call init_grid(worker)
+      call init_mixture(worker)
 
     end subroutine init_subwork
 
@@ -174,6 +204,17 @@ contains
       worker%egrid = grid(nediv, egrid_max, egrid_min)
     end subroutine init_grid
 
+    subroutine init_mixture(worker)
+      type(subwork) , intent(in out) :: worker
+      worker%mediamix = mixture(worker%egrid%number, worker%ngeneration)
+    end subroutine init_mixture
+
+    subroutine calculate_mixture(val, ratio, mixed)
+      real, intent(in) :: val(:,:), ratio(:,:)
+      real, intent(out) :: mixed(:)
+      mixed(:) = sum(val(:,:)*ratio(:,:), dim=1) / sum(ratio(:,:), dim=1)
+    end subroutine calculate_mixture
+
   end subroutine execute
 
   subroutine print_results(self)
@@ -228,6 +269,11 @@ contains
        unit = unit_stdout
 
        do imedia = 1, self%worker(iwork)%nmedia
+
+          write(unit,'("#")')
+          write(unit,'("#",1x 2a)') 'Media: ', trim(self%worker(iwork)%medium(imedia)%name)
+          write(unit,'("#")')
+
           call print_yield(unit, imedia)
           call print_gvalue(unit, imedia)
        end do
@@ -304,7 +350,7 @@ contains
     use mod_file_utils, only: get_unused_unit, unit_stdout
     use class_grid, only: grid
     class(work) :: self
-    integer :: iwork
+    integer :: iwork, imedia
     integer :: ie, igen, ngen
     integer :: unit
     character (len=100) :: file
@@ -317,22 +363,46 @@ contains
        call get_unused_unit(unit)
        open(unit, file=trim(file))
 
-       write(unit,'("#",2(1x,a20))', advance='no') 'Energy', 'Degradation (sum)'
-       do igen = 1, ngen
-          write(unit,'(1x, a16, 1x, i3)', advance='no') 'Degradation ', igen
-       end do
-       write(unit,*)
-
-       do ie = 1, self%worker(iwork)%egrid%number
-          write(unit,'(1x,2(1x,e20.12))', advance='no') &
-               self%worker(iwork)%egrid%val(ie), &
-               sum(self%worker(iwork)%medium(1)%degradation_gen(:, ie))
+       do imedia = 1, self%worker(iwork)%nmedia
+          write(unit,'("#")')
+          write(unit,'("#",1x 2a)') 'Media: ', trim(self%worker(iwork)%medium(imedia)%name)
+          write(unit,'("#")')
+          write(unit,'("#",2(1x,a20))', advance='no') 'Energy', 'Degradation (sum)'
           do igen = 1, ngen
-             write(unit,'(1x,e20.12)', advance='no') &
-                  self%worker(iwork)%medium(1)%degradation_gen(igen, ie)
+             write(unit,'(1x, a16, 1x, i3)', advance='no') 'Degradation ', igen
           end do
           write(unit,*)
+
+          do ie = 1, self%worker(iwork)%egrid%number
+             write(unit,'(1x,2(1x,e20.12))', advance='no') &
+                  self%worker(iwork)%egrid%val(ie), &
+                  sum(self%worker(iwork)%medium(imedia)%degradation_gen(:, ie))
+             do igen = 1, ngen
+                write(unit,'(1x,e20.12)', advance='no') &
+                     self%worker(iwork)%medium(imedia)%degradation_gen(igen, ie)
+             end do
+             write(unit,*)
+          end do
+
+          write(unit,*)
+          write(unit,*)
        end do
+
+       close(unit)
+
+       file = trim(self%worker(iwork)%name)//'_degradation_mix.dat'
+
+       call get_unused_unit(unit)
+       open(unit, file=trim(file))
+
+       write(unit,'("#",2(1x,a20))') 'Energy', 'Degradation (mix)'
+
+       do ie = 1, self%worker(iwork)%egrid%number
+          write(unit,'(1x,2(1x,e20.12))') &
+               self%worker(iwork)%egrid%val(ie), &
+               self%worker(iwork)%mediamix%degradation_mixture(ie)
+       end do
+
        close(unit)
     end do
 
@@ -341,18 +411,26 @@ contains
   subroutine print_results_gvalue(self)
     use mod_file_utils, only: get_unused_unit, unit_stdout
     class(work) :: self
-    integer :: iwork
+    integer :: iwork, imedia
     character (len=100) :: file
     integer :: unit
     do iwork = 1, self%number
        file = trim(self%worker(iwork)%name)//'_gvalue.dat'
        call get_unused_unit(unit)
        open(unit, file=trim(file))
-       write(unit,'("#",3(1x,a20))') 'ionize', 'singlet', 'triplet'
-       write(unit,'(1x,3(1x,e20.12))') &
-            sum(self%worker(iwork)%medium(1)%gvalue_ionize), &
-            sum(self%worker(iwork)%medium(1)%gvalue_singlet), &
-            sum(self%worker(iwork)%medium(1)%gvalue_triplet)
+
+       do imedia = 1, self%worker(iwork)%nmedia
+          write(unit,'("#")')
+          write(unit,'("#",1x 2a)') 'Media: ', trim(self%worker(iwork)%medium(imedia)%name)
+          write(unit,'("#")')
+          write(unit,'("#",3(1x,a20))') 'ionize', 'singlet', 'triplet'
+          write(unit,'(1x,3(1x,e20.12))') &
+               sum(self%worker(iwork)%medium(imedia)%gvalue_ionize), &
+               sum(self%worker(iwork)%medium(imedia)%gvalue_singlet), &
+               sum(self%worker(iwork)%medium(imedia)%gvalue_triplet)
+          write(unit,*)
+       end do
+
        close(unit)
     end do
   end subroutine print_results_gvalue
