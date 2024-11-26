@@ -92,6 +92,7 @@ contains
       ! default values
       norbital = 1
       ngeneration = 6
+      number_density = 1.
       name = 'unknown'
 
       call get_unused_unit(unit)
