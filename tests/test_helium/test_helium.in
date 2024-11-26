@@ -1,6 +1,10 @@
-&param_orbital
+&param_degradation
  ngeneration = 4
- file_orbital = "helium_nml.in"
+/
+&param_medium
+ nmedia = 1
+ file_medium = "helium_nml.in"
+ number_density = 0.26875e20
 /
 
 &param_grid

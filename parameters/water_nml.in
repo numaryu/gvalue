@@ -1,6 +1,5 @@
-&param_medium
+&param_orbital
  norbital = 5
- number_density = 0.26875e20
  name = 'water'
 /
 

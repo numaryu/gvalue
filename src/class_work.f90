@@ -80,36 +80,41 @@ contains
       use mod_file_utils, only: get_unused_unit, unit_stdin, unit_stdout
       type(subwork), intent(in out) :: worker
       integer :: unit
-      character (len=100) :: file_orbital
-      integer :: norbital, ngeneration
+      character (len=100) :: file_medium
+      integer :: ngeneration
+      integer :: norbital, nmedia
       real :: number_density
       character (len=100) :: name
       logical :: ex
-      namelist /param_orbital/ file_orbital, ngeneration
-      namelist /param_medium/ norbital, number_density, name
+      namelist /param_degradation/ ngeneration
+      namelist /param_medium/ file_medium, nmedia, number_density
+      namelist /param_orbital/ norbital, name
 
       ! default values
       ngeneration = 6
-      norbital = 1
+      nmedia = 1
       number_density = 1.
+      norbital = 1
       name = 'unknown'
 
       call get_unused_unit(unit)
       open(unit, file=trim(worker%name)//'.in')
+      read(unit, param_degradation)
+      read(unit, param_medium)
+      close(unit)
+      write(unit_stdout, param_degradation)
+      write(unit_stdout, param_medium)
+
+      inquire(file=trim(file_medium), exist = ex)
+      if (.not.ex) stop 'orbital file does not exist!'
+
+      call get_unused_unit(unit)
+      open(unit, file=trim(file_medium))
       read(unit, param_orbital)
       close(unit)
       write(unit_stdout, param_orbital)
 
-      inquire(file=trim(file_orbital), exist = ex)
-      if (.not.ex) stop 'orbital file does not exist!'
-
-      call get_unused_unit(unit)
-      open(unit, file=trim(file_orbital))
-      read(unit, param_medium)
-      close(unit)
-      write(unit_stdout, param_medium)
-
-      worker%medium = orbital(norbital, ngeneration, file_orbital)
+      worker%medium = orbital(norbital, ngeneration, file_medium)
 
       worker%medium%number_density = number_density
       worker%medium%name = name

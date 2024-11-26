@@ -1,6 +1,5 @@
-&param_medium
+&param_orbital
  norbital = 23
- number_density = 6.02e21
  name = 'PHS'
 /
 
