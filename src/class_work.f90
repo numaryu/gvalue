@@ -87,7 +87,7 @@ contains
       character (len=100) :: name
       logical :: ex
       namelist /param_degradation/ ngeneration
-      namelist /param_medium/ file_medium, nmedia, number_density
+      namelist /param_medium/ nmedia, file_medium, number_density
       namelist /param_orbital/ norbital, name
 
       ! default values
