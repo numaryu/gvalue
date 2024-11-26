@@ -68,9 +68,11 @@ contains
        call init_subwork(self%worker(iwork))
 
        do imedia = 1, self%worker(iwork)%nmedia
-          call self%worker(iwork)%medium(imedia)%init_orbital_vars(self%worker(iwork)%egrid%number)
+          call self%worker(iwork)%medium(imedia)%init_orbital_vars(self%worker(iwork)%egrid%number, &
+               self%worker(iwork)%ngeneration)
           call self%worker(iwork)%medium(imedia)%calculate_stopping_power(self%worker(iwork)%egrid)
-          call self%worker(iwork)%medium(imedia)%calculate_degradation(self%worker(iwork)%egrid)
+          call self%worker(iwork)%medium(imedia)%calculate_degradation(self%worker(iwork)%egrid, &
+               self%worker(iwork)%ngeneration)
           call self%worker(iwork)%medium(imedia)%calculate_yield(self%worker(iwork)%egrid)
        end do
 
@@ -140,7 +142,7 @@ contains
          close(unit)
          write(unit_stdout, param_orbital)
 
-         worker%medium(imedia) = orbital(norbital, name, worker%ngeneration, &
+         worker%medium(imedia) = orbital(norbital, name, &
               file_medium(imedia), number_density(imedia))
       end do
 

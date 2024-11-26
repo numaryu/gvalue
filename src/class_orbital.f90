@@ -13,8 +13,6 @@ module class_orbital
 
      ! number of orbital
      integer, public :: number = 0
-     ! number of generation
-     integer, public :: generation = 0
      ! ionization Ii, kinetic Ei, singlet Esi, triplet Eti energies (per orbital)
      real, pointer, public :: energy_ionize(:) => null(), energy_kinetic(:) => null()
      real, pointer, public :: energy_singlet(:) => null(), energy_triplet(:) => null()
@@ -70,15 +68,14 @@ module class_orbital
 
 contains
 
-  type(orbital) function init_orbital(norbital, name, ngeneration, file_medium, number_density)
-    integer, intent(in) :: norbital, ngeneration
+  type(orbital) function init_orbital(norbital, name, file_medium, number_density)
+    integer, intent(in) :: norbital
     character (len=*), intent(in) :: name
     character (len=*), intent(in) :: file_medium
     real, intent(in) :: number_density
     
     init_orbital%number = norbital
     init_orbital%name = name
-    init_orbital%generation = ngeneration
     init_orbital%number_density = number_density
 
     if (.not.associated(init_orbital%energy_ionize)) allocate(init_orbital%energy_ionize(norbital))
@@ -144,15 +141,15 @@ contains
     self%number_electrons(1:norbital) = number_electrons(1:norbital)
   end subroutine read_params
 
-  subroutine init_orbital_vars(self, ngrid)
+  subroutine init_orbital_vars(self, ngrid, ngeneration)
     class(orbital) :: self
-    integer, intent(in) :: ngrid
+    integer, intent(in) :: ngrid, ngeneration
     if (.not.associated(self%stop_power_orbital)) allocate(self%stop_power_orbital(self%number, ngrid))
     self%stop_power_orbital = 0.0
     if (.not.associated(self%stop_power)) allocate(self%stop_power(ngrid))
 !!!    self%stop_power = 0.0 ! not necessary
 
-    if (.not.associated(self%degradation_gen)) allocate(self%degradation_gen(self%generation, ngrid))
+    if (.not.associated(self%degradation_gen)) allocate(self%degradation_gen(ngeneration, ngrid))
     self%degradation_gen = 0.0
 
     if (.not.associated(self%total_cross_section_ionize_orbital)) &
@@ -362,13 +359,12 @@ contains
 
   end function integrate_E_sigma
 
-  recursive subroutine calculate_degradation(self, egrid, ngen_in)
+  recursive subroutine calculate_degradation(self, egrid, ngen)
     use mod_constants, only: bb
     use class_grid, only: grid
     class(orbital) :: self
     class(grid), intent(in) :: egrid
-    integer, intent(in), optional :: ngen_in
-    integer :: ngen
+    integer, intent(in) :: ngen
     real :: energy1, denergy1, energy2, denergy2
     real :: energy_ionize, energy_kinetic
     integer :: io
@@ -376,12 +372,6 @@ contains
     real :: energy1_max, energy2_max
     integer :: nenergy_max
     integer :: nenergy1_max, nenergy2_max
-
-    if (.not.present(ngen_in)) then
-       ngen = self%generation
-    else
-       ngen = ngen_in
-    end if
 
     nenergy_max = egrid%grid_number(minval(self%energy_triplet))
 
