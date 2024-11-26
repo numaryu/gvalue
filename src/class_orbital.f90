@@ -124,12 +124,12 @@ contains
     real :: energy_triplet(norbital)
     integer :: number_electrons(norbital)
     
-    namelist /orbital_params/ energy_ionize, energy_kinetic, &
+    namelist /params_per_orbitals/ energy_ionize, energy_kinetic, &
          energy_singlet, energy_triplet, number_electrons
     
     call get_unused_unit(unit)
     open(unit,file=trim(file))
-    read(unit,orbital_params)
+    read(unit,params_per_orbitals)
     close(unit)
 
     self%energy_ionize(1:norbital) = energy_ionize(1:norbital)

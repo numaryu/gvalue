@@ -1,15 +1,12 @@
-&orbital_dim
- norbital = 3
-/
-
 &param_medium
+ norbital = 3
  number_density = 0.26875e20
  name = 'neon'
 /
 
 ! S. Sato et al Bull. Chem. Soc. JPN 47, 2174 (1974).
 ! S. Sato et al Bull. Chem. Soc. JPN 48, 1411 (1975).
-&orbital_params
+&params_per_orbitals
     energy_ionize = 21.559 48.42  867.
    energy_singlet = 16.8   43.65  865.
    energy_triplet = 16.7   43.65  865.

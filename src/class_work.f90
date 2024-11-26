@@ -86,12 +86,11 @@ contains
       character (len=100) :: name
       logical :: ex
       namelist /param_orbital/ file_orbital, ngeneration
-      namelist /orbital_dim/ norbital
-      namelist /param_medium/ number_density, name
+      namelist /param_medium/ norbital, number_density, name
 
       ! default values
-      norbital = 1
       ngeneration = 6
+      norbital = 1
       number_density = 1.
       name = 'unknown'
 
@@ -106,10 +105,8 @@ contains
 
       call get_unused_unit(unit)
       open(unit, file=trim(file_orbital))
-      read(unit, orbital_dim)
       read(unit, param_medium)
       close(unit)
-      write(unit_stdout, orbital_dim)
       write(unit_stdout, param_medium)
 
       worker%medium = orbital(norbital, ngeneration, file_orbital)
@@ -128,7 +125,7 @@ contains
       ! egrid_max, egrid_min are the maximum, minimum energy
       real :: egrid_max, egrid_min
 
-      namelist /grid_param/ nediv, egrid_max, egrid_min
+      namelist /param_grid/ nediv, egrid_max, egrid_min
 
       ! default values
       nediv = 40
@@ -137,9 +134,9 @@ contains
 
       call get_unused_unit(unit)
       open(unit, file=trim(worker%name)//'.in')
-      read(unit, grid_param)
+      read(unit, param_grid)
       close(unit)
-      write(unit_stdout, grid_param)
+      write(unit_stdout, param_grid)
 
       worker%egrid = grid(nediv, egrid_max, egrid_min)
     end subroutine init_grid

@@ -1,14 +1,11 @@
-&orbital_dim
- norbital = 5
-/
-
 &param_medium
+ norbital = 5
  number_density = 0.26875e20
  name = 'water'
 /
 
 ! K. Okazaki et al Bull. Chem. Soc. JPN 49, 174 (1976).
-&orbital_params
+&params_per_orbitals
     energy_ionize = 12.6  14.7  18.4  32.2  539.7
    energy_singlet =  7.42  9.5  13.   27.   535.
    energy_triplet =  5.0   7.   11.   25.   533.

@@ -3,7 +3,7 @@
  file_orbital = "neon_nml.in"
 /
 
-&grid_param
+&param_grid
  nediv = 40
  egrid_max = 1.e5
  egrid_min = 1.e0

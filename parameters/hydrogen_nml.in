@@ -1,14 +1,11 @@
-&orbital_dim
- norbital = 1
-/
-
 &param_medium
+ norbital = 1
  number_density = 0.26875e20
  name = 'hydrogen'
 /
 
 ! K. Okazaki et al Bull. Chem. Soc. JPN 48, 3523 (1975).
-&orbital_params
+&params_per_orbitals
     energy_ionize = 16.0
    energy_singlet = 12.6
    energy_triplet = 8.8

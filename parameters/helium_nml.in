@@ -1,14 +1,11 @@
-&orbital_dim
- norbital = 1
-/
-
 &param_medium
+ norbital = 1
  number_density = 0.26875e20
  name = 'helium'
 /
 
 ! S. Sato et al Bull. Chem. Soc. JPN 47, 2174 (1974).
-&orbital_params
+&params_per_orbitals
     energy_ionize = 24.581
    energy_singlet = 21.2
    energy_triplet = 19.8
