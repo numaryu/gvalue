@@ -129,6 +129,11 @@ contains
 
       namelist /grid_param/ nediv, egrid_max, egrid_min
 
+      ! default values
+      nediv = 40
+      egrid_max = 1.e5
+      egrid_min = 1.e0
+
       call get_unused_unit(unit)
       open(unit, file=trim(worker%name)//'.in')
       read(unit, grid_param)
