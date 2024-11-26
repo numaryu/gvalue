@@ -8,6 +8,9 @@ module class_orbital
      private
      ! name of medium
      character (len=100), public :: name = 'unknown'
+     ! number density
+     real, public :: number_density
+
      ! number of orbital
      integer, public :: number = 0
      ! number of generation
@@ -17,8 +20,6 @@ module class_orbital
      real, pointer, public :: energy_singlet(:) => null(), energy_triplet(:) => null()
      ! number of electrons (per orbital)
      integer, pointer, public :: number_electrons(:) => null()
-     ! number density
-     real, public :: number_density
 
      ! yield Ni and G value of processes (per orbital)
      real, pointer, public :: yield_ionize(:) => null(), gvalue_ionize(:) => null()
@@ -69,12 +70,16 @@ module class_orbital
 
 contains
 
-  type(orbital) function init_orbital(norbital, ngeneration, file_orbital)
+  type(orbital) function init_orbital(norbital, name, ngeneration, file_medium, number_density)
     integer, intent(in) :: norbital, ngeneration
-    character (len=*), intent(in) :: file_orbital
+    character (len=*), intent(in) :: name
+    character (len=*), intent(in) :: file_medium
+    real, intent(in) :: number_density
     
     init_orbital%number = norbital
+    init_orbital%name = name
     init_orbital%generation = ngeneration
+    init_orbital%number_density = number_density
 
     if (.not.associated(init_orbital%energy_ionize)) allocate(init_orbital%energy_ionize(norbital))
     if (.not.associated(init_orbital%energy_kinetic)) allocate(init_orbital%energy_kinetic(norbital))
@@ -89,7 +94,7 @@ contains
     if (.not.associated(init_orbital%yield_triplet)) allocate(init_orbital%yield_triplet(norbital))
     if (.not.associated(init_orbital%gvalue_triplet)) allocate(init_orbital%gvalue_triplet(norbital))
 
-    call read_params(init_orbital, norbital, file_orbital)
+    call read_params(init_orbital, norbital, file_medium)
   end function init_orbital
 
   subroutine destroy(self)
