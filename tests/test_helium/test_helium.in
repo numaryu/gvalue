@@ -2,6 +2,7 @@
  ngeneration = 4
  nmedia = 1
 /
+
 &param_medium
  file_medium = "helium_nml.in"
  number_density = 0.26875e20
