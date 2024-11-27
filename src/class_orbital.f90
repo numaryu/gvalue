@@ -1,10 +1,10 @@
-module class_orbital
+module class_medium
   implicit none
   private
 
-  public :: orbital
+  public :: medium
 
-  type orbital
+  type medium
      private
      ! name of medium
      character (len=100), public :: name = 'unknown'
@@ -59,43 +59,43 @@ module class_orbital
      procedure :: calculate_stopping_power
      procedure :: calculate_degradation
      procedure :: calculate_yield
-  end type orbital
+  end type medium
 
   ! declare constructor
-  interface orbital
-     module procedure init_orbital
-  end interface orbital
+  interface medium
+     module procedure init_medium
+  end interface medium
 
 contains
 
-  type(orbital) function init_orbital(norbital, name, file_medium, number_density)
+  type(medium) function init_medium(norbital, name, file_medium, number_density)
     integer, intent(in) :: norbital
     character (len=*), intent(in) :: name
     character (len=*), intent(in) :: file_medium
     real, intent(in) :: number_density
     
-    init_orbital%number = norbital
-    init_orbital%name = name
-    init_orbital%number_density = number_density
+    init_medium%number = norbital
+    init_medium%name = name
+    init_medium%number_density = number_density
 
-    if (.not.associated(init_orbital%energy_ionize)) allocate(init_orbital%energy_ionize(norbital))
-    if (.not.associated(init_orbital%energy_kinetic)) allocate(init_orbital%energy_kinetic(norbital))
-    if (.not.associated(init_orbital%energy_singlet)) allocate(init_orbital%energy_singlet(norbital))
-    if (.not.associated(init_orbital%energy_triplet)) allocate(init_orbital%energy_triplet(norbital))
-    if (.not.associated(init_orbital%number_electrons)) allocate(init_orbital%number_electrons(norbital))
+    if (.not.associated(init_medium%energy_ionize)) allocate(init_medium%energy_ionize(norbital))
+    if (.not.associated(init_medium%energy_kinetic)) allocate(init_medium%energy_kinetic(norbital))
+    if (.not.associated(init_medium%energy_singlet)) allocate(init_medium%energy_singlet(norbital))
+    if (.not.associated(init_medium%energy_triplet)) allocate(init_medium%energy_triplet(norbital))
+    if (.not.associated(init_medium%number_electrons)) allocate(init_medium%number_electrons(norbital))
 
-    if (.not.associated(init_orbital%yield_ionize)) allocate(init_orbital%yield_ionize(norbital))
-    if (.not.associated(init_orbital%gvalue_ionize)) allocate(init_orbital%gvalue_ionize(norbital))
-    if (.not.associated(init_orbital%yield_singlet)) allocate(init_orbital%yield_singlet(norbital))
-    if (.not.associated(init_orbital%gvalue_singlet)) allocate(init_orbital%gvalue_singlet(norbital))
-    if (.not.associated(init_orbital%yield_triplet)) allocate(init_orbital%yield_triplet(norbital))
-    if (.not.associated(init_orbital%gvalue_triplet)) allocate(init_orbital%gvalue_triplet(norbital))
+    if (.not.associated(init_medium%yield_ionize)) allocate(init_medium%yield_ionize(norbital))
+    if (.not.associated(init_medium%gvalue_ionize)) allocate(init_medium%gvalue_ionize(norbital))
+    if (.not.associated(init_medium%yield_singlet)) allocate(init_medium%yield_singlet(norbital))
+    if (.not.associated(init_medium%gvalue_singlet)) allocate(init_medium%gvalue_singlet(norbital))
+    if (.not.associated(init_medium%yield_triplet)) allocate(init_medium%yield_triplet(norbital))
+    if (.not.associated(init_medium%gvalue_triplet)) allocate(init_medium%gvalue_triplet(norbital))
 
-    call read_params(init_orbital, norbital, file_medium)
-  end function init_orbital
+    call read_params(init_medium, norbital, file_medium)
+  end function init_medium
 
   subroutine destroy(self)
-    type(orbital), intent(in out) :: self
+    type(medium), intent(in out) :: self
     if (associated(self%energy_ionize)) nullify(self%energy_ionize)
     if (associated(self%energy_kinetic)) nullify(self%energy_kinetic)
     if (associated(self%energy_singlet)) nullify(self%energy_singlet)
@@ -114,7 +114,7 @@ contains
 
   subroutine read_params(self, norbital, file)
     use mod_file_utils, only: get_unused_unit
-    class(orbital) :: self
+    class(medium) :: self
     integer, intent(in) :: norbital
     character (len=*), intent(in) :: file
 
@@ -142,7 +142,7 @@ contains
   end subroutine read_params
 
   subroutine init_orbital_vars(self, ngrid, ngeneration)
-    class(orbital) :: self
+    class(medium) :: self
     integer, intent(in) :: ngrid, ngeneration
     if (.not.associated(self%stop_power_orbital)) allocate(self%stop_power_orbital(self%number, ngrid))
     self%stop_power_orbital = 0.0
@@ -195,7 +195,7 @@ contains
   end subroutine init_orbital_vars
 
   subroutine finish_orbital_vars(self)
-    class(orbital) :: self
+    class(medium) :: self
     if (associated(self%stop_power_orbital)) nullify(self%stop_power_orbital)
     if (associated(self%stop_power)) nullify(self%stop_power)
 
@@ -225,7 +225,7 @@ contains
 
   subroutine calculate_stopping_power(self, egrid)
     use class_grid, only: grid
-    class(orbital) :: self
+    class(medium) :: self
     class(grid), intent(in) :: egrid
     integer :: io, ie
     integer :: ne1, ne2, ne3
@@ -279,7 +279,7 @@ contains
   end subroutine calculate_stopping_power
 
   real function integrate_E_sigma(self, type, io, energy, range_min, range_max)
-    class(orbital) :: self
+    class(medium) :: self
     character (len=*) :: type
     integer, intent(in) :: io
     real, intent(in) :: energy
@@ -363,7 +363,7 @@ contains
     use mod_constants, only: bb
     use class_grid, only: grid
     use class_mixture, only: mixture
-    class(orbital) :: self
+    class(medium) :: self
     class(grid), intent(in) :: egrid
     class(mixture), intent(in) :: mediamix
     integer, intent(in) :: ngen
@@ -441,7 +441,7 @@ contains
   subroutine calculate_yield(self, egrid, mediamix)
     use class_grid, only: grid
     use class_mixture, only: mixture
-    class(orbital) :: self
+    class(medium) :: self
     class(grid), intent(in) :: egrid
     class(mixture), intent(in) :: mediamix
     integer :: io, ie
@@ -584,7 +584,7 @@ contains
   end subroutine calculate_yield
   
   real function integrate_sigma(self, type, io, energy, range_min, range_max)
-    class(orbital) :: self
+    class(medium) :: self
     character (len=*) :: type
     integer, intent(in) :: io
     real, intent(in) :: energy
@@ -660,4 +660,4 @@ contains
 
   end function integrate_sigma
 
-end module class_orbital
+end module class_medium

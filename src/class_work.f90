@@ -1,5 +1,5 @@
 module class_work
-  use class_orbital, only: orbital
+  use class_medium, only: medium
   use class_grid, only: grid
   use class_mixture, only: mixture
   implicit none
@@ -20,7 +20,7 @@ module class_work
   type subwork
      character (len=100) :: name
      integer :: nmedia, ngeneration
-     type(orbital), pointer :: medium(:) => null()
+     type(medium), pointer :: medium(:) => null()
      type(grid) :: egrid
      type(mixture) :: mediamix
   end type subwork
@@ -131,13 +131,13 @@ contains
       worker%nmedia = nmedia
       if (.not.associated(worker%medium)) allocate(worker%medium(nmedia))
 
-      call init_orbital(worker)
+      call init_medium(worker)
       call init_grid(worker)
       call init_mixture(worker)
 
     end subroutine init_subwork
 
-    subroutine init_orbital(worker)
+    subroutine init_medium(worker)
       use mod_file_utils, only: get_unused_unit, unit_stdin, unit_stdout
       type(subwork), intent(in out) :: worker
       integer :: unit
@@ -172,11 +172,11 @@ contains
          close(unit)
          write(unit_stdout, param_orbital)
 
-         worker%medium(imedia) = orbital(norbital, name, &
+         worker%medium(imedia) = medium(norbital, name, &
               file_medium(imedia), number_density(imedia))
       end do
 
-    end subroutine init_orbital
+    end subroutine init_medium
 
     subroutine init_grid(worker)
       use mod_file_utils, only: get_unused_unit, unit_stdin, unit_stdout
