@@ -9,9 +9,9 @@ def test_spectra():
     test_neon = np.loadtxt("test_neon.dat")
     spectra_result = np.zeros( (test_neon.shape[0], 9) )
     spectra_result[:, 0] = np.flipud(test_neon[:, 0])
-    spectra_result[:, 1:7] = np.flipud(test_neon[:, 3:9])
+    spectra_result[:, 1:7] = np.flipud(test_neon[:, 4:10])
     spectra_result[:, 7] = np.flipud(test_neon[:, 1])
-    spectra_result[:, 8] = np.flipud(test_neon[:, 9])
+    spectra_result[:, 8] = np.flipud(test_neon[:, 10])
 
     # data from WolframEngine
     spectra_data = np.loadtxt("spectra_neon.dat")
