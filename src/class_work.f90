@@ -247,18 +247,18 @@ contains
 
           do ie = 1, self%worker(iwork)%egrid%number
              write(unit,'(1x,13(1x,e20.12))') self%worker(iwork)%egrid%val(ie), &
-                  self%worker(iwork)%medium(1)%stop_power(ie), &
-                  sum(self%worker(iwork)%medium(1)%degradation_gen(:, ie)), &
-                  self%worker(iwork)%medium(1)%total_cross_section_ionize(ie), &
-                  self%worker(iwork)%medium(1)%total_cross_section_singlet(ie), &
-                  self%worker(iwork)%medium(1)%total_cross_section_triplet(ie), &
-                  sum(self%worker(iwork)%medium(1)%platzman_ionize_orbital(:, ie)), &
-                  sum(self%worker(iwork)%medium(1)%platzman_singlet_orbital(:, ie)), &
-                  sum(self%worker(iwork)%medium(1)%platzman_triplet_orbital(:, ie)), &
-                  self%worker(iwork)%medium(1)%mean_free_path(ie), &
-                  self%worker(iwork)%medium(1)%range_ionize(ie), &
-                  self%worker(iwork)%medium(1)%range_singlet(ie), &
-                  self%worker(iwork)%medium(1)%range_triplet(ie)
+                  self%worker(iwork)%medium(imedia)%stop_power(ie), &
+                  sum(self%worker(iwork)%medium(imedia)%degradation_gen(:, ie)), &
+                  self%worker(iwork)%medium(imedia)%total_cross_section_ionize(ie), &
+                  self%worker(iwork)%medium(imedia)%total_cross_section_singlet(ie), &
+                  self%worker(iwork)%medium(imedia)%total_cross_section_triplet(ie), &
+                  sum(self%worker(iwork)%medium(imedia)%platzman_ionize_orbital(:, ie)), &
+                  sum(self%worker(iwork)%medium(imedia)%platzman_singlet_orbital(:, ie)), &
+                  sum(self%worker(iwork)%medium(imedia)%platzman_triplet_orbital(:, ie)), &
+                  self%worker(iwork)%medium(imedia)%mean_free_path(ie), &
+                  self%worker(iwork)%medium(imedia)%range_ionize(ie), &
+                  self%worker(iwork)%medium(imedia)%range_singlet(ie), &
+                  self%worker(iwork)%medium(imedia)%range_triplet(ie)
           end do
 
           write(unit,*)
