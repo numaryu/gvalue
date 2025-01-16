@@ -13,6 +13,9 @@ module class_mixture
      ! mixture of degradation y(energy)
      real, pointer, public :: degradation_mixture(:) => null()
 
+     ! mixture of mean free path(energy)
+     real, pointer, public :: mean_free_path_mixture(:) => null()
+
    contains
      final :: destroy
   end type mixture
@@ -29,12 +32,15 @@ contains
     if (.not.associated(init_mixture%stop_power_mixture)) allocate(init_mixture%stop_power_mixture(ngrid))
     init_mixture%stop_power_mixture=0.
     if (.not.associated(init_mixture%degradation_mixture)) allocate(init_mixture%degradation_mixture(ngrid))
+    if (.not.associated(init_mixture%mean_free_path_mixture)) &
+         allocate(init_mixture%mean_free_path_mixture(ngrid))
   end function init_mixture
 
   subroutine destroy(self)
     type(mixture), intent(in out) :: self
     if (associated(self%stop_power_mixture)) nullify(self%stop_power_mixture)
     if (associated(self%degradation_mixture)) nullify(self%degradation_mixture)
+    if (associated(self%mean_free_path_mixture)) nullify(self%mean_free_path_mixture)
   end subroutine destroy
 
 end module class_mixture

@@ -39,14 +39,12 @@ module class_medium
      real, pointer, public :: total_cross_section_ionize(:) => null()
      real, pointer, public :: total_cross_section_singlet(:) => null()
      real, pointer, public :: total_cross_section_triplet(:) => null()
+     real, pointer, public :: total_cross_section_total(:) => null()
 
      ! platzman energy*y(energy)*Q(energy) (per orbital)
      real, pointer, public :: platzman_ionize_orbital(:,:) => null()
      real, pointer, public :: platzman_singlet_orbital(:,:) => null()
      real, pointer, public :: platzman_triplet_orbital(:,:) => null()
-
-     ! mean free path
-     real, pointer, public :: mean_free_path(:) => null()
 
      ! range
      real, pointer, public :: range_ionize(:) => null()
@@ -168,6 +166,8 @@ contains
          allocate(self%total_cross_section_singlet(ngrid))
     if (.not.associated(self%total_cross_section_triplet)) &
          allocate(self%total_cross_section_triplet(ngrid))
+    if (.not.associated(self%total_cross_section_total)) &
+         allocate(self%total_cross_section_total(ngrid))
 !!!    self%total_cross_section_ionize = 0.0 ! not necessary
 !!!    self%total_cross_section_singlet = 0.0 ! not necessary
 !!!    self%total_cross_section_triplet = 0.0 ! not necessary
@@ -181,9 +181,6 @@ contains
     self%platzman_ionize_orbital = 0.0
     self%platzman_singlet_orbital = 0.0
     self%platzman_triplet_orbital = 0.0
-
-    if (.not.associated(self%mean_free_path)) allocate(self%mean_free_path(ngrid))
-    self%mean_free_path = 0.0
 
     if (.not.associated(self%range_ionize)) allocate(self%range_ionize(ngrid))
     if (.not.associated(self%range_singlet)) allocate(self%range_singlet(ngrid))
@@ -211,12 +208,11 @@ contains
     if (associated(self%total_cross_section_ionize)) nullify(self%total_cross_section_ionize)
     if (associated(self%total_cross_section_singlet)) nullify(self%total_cross_section_singlet)
     if (associated(self%total_cross_section_triplet)) nullify(self%total_cross_section_triplet)
+    if (associated(self%total_cross_section_total)) nullify(self%total_cross_section_total)
 
     if (associated(self%platzman_ionize_orbital)) nullify(self%platzman_ionize_orbital)
     if (associated(self%platzman_singlet_orbital)) nullify(self%platzman_singlet_orbital)
     if (associated(self%platzman_triplet_orbital)) nullify(self%platzman_triplet_orbital)
-
-    if (associated(self%mean_free_path)) nullify(self%mean_free_path)
 
     if (associated(self%range_ionize)) nullify(self%range_ionize)
     if (associated(self%range_singlet)) nullify(self%range_singlet)
@@ -551,13 +547,8 @@ contains
        end if
     end do
 
-    self%mean_free_path = self%number_density*( &
-         self%total_cross_section_ionize + &
-         self%total_cross_section_singlet + &
-         self%total_cross_section_triplet )
-    where (self%mean_free_path /= 0.)
-       self%mean_free_path = 1./self%mean_free_path
-    end where
+    self%total_cross_section_total = self%total_cross_section_ionize + &
+         self%total_cross_section_singlet + self%total_cross_section_triplet
 
     where (self%stop_power /= 0.)
        t_over_s = egrid%val(:) / self%stop_power(:) * (-log(egrid%div))

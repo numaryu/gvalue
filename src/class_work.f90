@@ -64,7 +64,10 @@ contains
   subroutine execute(self)
     class(work) :: self
     integer :: iwork, imedia
-    real, allocatable :: stop_power(:,:), degradation(:,:), number_density(:,:)
+    real, allocatable :: stop_power(:,:), degradation(:,:)
+    real, allocatable :: number_density(:)
+    real, allocatable :: total_cross_section_total(:,:)
+
     do iwork = 1, self%number
        write(6,'(/1x,a,i0,a,a/)') '=====> WORK ', iwork, ': ',self%worker(iwork)%name
 
@@ -75,7 +78,9 @@ contains
        if (.not.allocated(degradation)) allocate( &
             degradation(self%worker(iwork)%nmedia, self%worker(iwork)%egrid%number))
        if (.not.allocated(number_density)) allocate( &
-            number_density(self%worker(iwork)%nmedia,self%worker(iwork)%egrid%number))
+            number_density(self%worker(iwork)%nmedia))
+       if (.not.allocated(total_cross_section_total)) allocate( &
+            total_cross_section_total(self%worker(iwork)%nmedia,self%worker(iwork)%egrid%number))
 
        do imedia = 1, self%worker(iwork)%nmedia
           call self%worker(iwork)%medium(imedia)%init_orbital_vars(self%worker(iwork)%egrid%number, &
@@ -83,10 +88,11 @@ contains
           call self%worker(iwork)%medium(imedia)%calculate_stopping_power(self%worker(iwork)%egrid)
 
           stop_power(imedia,:) = self%worker(iwork)%medium(imedia)%stop_power
-          number_density(imedia,:) = self%worker(iwork)%medium(imedia)%number_density
+          number_density(imedia) = self%worker(iwork)%medium(imedia)%number_density
        end do
 
-       call calculate_mixture(stop_power, number_density, self%worker(iwork)%mediamix%stop_power_mixture)
+       call calculate_mixture(stop_power, number_density/sum(number_density), &
+            self%worker(iwork)%mediamix%stop_power_mixture)
 
        do imedia = 1, self%worker(iwork)%nmedia
           call self%worker(iwork)%medium(imedia)%calculate_degradation(self%worker(iwork)%egrid, &
@@ -94,16 +100,26 @@ contains
           degradation(imedia,:) = sum(self%worker(iwork)%medium(imedia)%degradation_gen(:,:), dim=1)
        end do
 
-       call calculate_mixture(degradation, number_density, self%worker(iwork)%mediamix%degradation_mixture)
+       call calculate_mixture(degradation, number_density/sum(number_density), &
+            self%worker(iwork)%mediamix%degradation_mixture)
 
        do imedia = 1, self%worker(iwork)%nmedia
           call self%worker(iwork)%medium(imedia)%calculate_yield(self%worker(iwork)%egrid, &
                self%worker(iwork)%mediamix)
+          total_cross_section_total(imedia,:) = self%worker(iwork)%medium(imedia)%total_cross_section_total
        end do
+
+       call calculate_mixture(total_cross_section_total, number_density, &
+            self%worker(iwork)%mediamix%mean_free_path_mixture)
+       where (self%worker(iwork)%mediamix%mean_free_path_mixture /= 0.)
+          self%worker(iwork)%mediamix%mean_free_path_mixture = &
+               1./self%worker(iwork)%mediamix%mean_free_path_mixture
+       end where
 
        if (allocated(stop_power)) deallocate(stop_power)
        if (allocated(degradation)) deallocate(degradation)
        if (allocated(number_density)) deallocate(number_density)
+       if (allocated(total_cross_section_total)) deallocate(total_cross_section_total)
 
        write(6,'(/1x,a,i0,a/)') '=====> WORK ', iwork, ': done'
     end do
@@ -210,9 +226,9 @@ contains
     end subroutine init_mixture
 
     subroutine calculate_mixture(val, ratio, mixed)
-      real, intent(in) :: val(:,:), ratio(:,:)
+      real, intent(in) :: val(:,:), ratio(:)
       real, intent(out) :: mixed(:)
-      mixed(:) = sum(val(:,:)*ratio(:,:), dim=1) / sum(ratio(:,:), dim=1)
+      mixed(:) = sum(val(:,:)*spread(ratio, 2, size(val,2)), dim=1)
     end subroutine calculate_mixture
 
   end subroutine execute
@@ -241,13 +257,16 @@ contains
           call print_gvalue(unit, imedia)
 
           write(unit,'("#")')
-          write(unit,'("#",13(1x,a20))') 'Energy', 'Stopping Power', 'Degradation (sum)', &
+          write(unit,'("#",14(1x,a20))') 'Energy', &
+               'Stopping Power', 'Stopping Power (mix)', 'Degradation (sum)', &
                'Total Cross Sec. i', 'Total Cross Sec. s', 'Total Cross Sec. t', &
-               'Platzman i', 'Platzman s', 'Platzman t', 'Mean Free Path', 'Range i', 'Range s', 'Range t'
+               'Platzman i', 'Platzman s', 'Platzman t', 'Mean Free Path (mix)', &
+               'Range i', 'Range s', 'Range t'
 
           do ie = 1, self%worker(iwork)%egrid%number
-             write(unit,'(1x,13(1x,e20.12))') self%worker(iwork)%egrid%val(ie), &
+             write(unit,'(1x,14(1x,e20.12))') self%worker(iwork)%egrid%val(ie), &
                   self%worker(iwork)%medium(imedia)%stop_power(ie), &
+                  self%worker(iwork)%mediamix%stop_power_mixture(ie), &
                   sum(self%worker(iwork)%medium(imedia)%degradation_gen(:, ie)), &
                   self%worker(iwork)%medium(imedia)%total_cross_section_ionize(ie), &
                   self%worker(iwork)%medium(imedia)%total_cross_section_singlet(ie), &
@@ -255,7 +274,7 @@ contains
                   sum(self%worker(iwork)%medium(imedia)%platzman_ionize_orbital(:, ie)), &
                   sum(self%worker(iwork)%medium(imedia)%platzman_singlet_orbital(:, ie)), &
                   sum(self%worker(iwork)%medium(imedia)%platzman_triplet_orbital(:, ie)), &
-                  self%worker(iwork)%medium(imedia)%mean_free_path(ie), &
+                  self%worker(iwork)%mediamix%mean_free_path_mixture(ie), &
                   self%worker(iwork)%medium(imedia)%range_ionize(ie), &
                   self%worker(iwork)%medium(imedia)%range_singlet(ie), &
                   self%worker(iwork)%medium(imedia)%range_triplet(ie)
