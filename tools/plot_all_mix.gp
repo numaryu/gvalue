@@ -1,8 +1,8 @@
-runname = "test_helium"
-outfile = "results.eps"
+runname = "test_mixture"
+outfile = "results_mix.eps"
 
-nmedia = 1
-ngeneration = 4
+nmedia = 2
+ngeneration = 6
 
 file_result = sprintf("%s.dat",runname)
 file_degradation = sprintf("%s_degradation.dat",runname)
@@ -26,9 +26,12 @@ set key top Left samplen 2 width 0
 #set yrange [1.e-18:]
 
 plot \
-	file_result u 1:2 w l \
+	file_result u 1:3 w l \
 	lw 4 lc 1 \
-	title "", \
+	title "Mix", \
+	for [i=1:nmedia] file_result index i-1 u 1:2 w l \
+	lw 4 lc i+1 dt 2 \
+	title sprintf("Medium %d",i)
 
 set xlabel "Energy {/Times-Italic T} [eV]"
 set ylabel "Slowing-down {/Times-Italic y}({/Times-Italic T}) [cm/eV]"
@@ -42,12 +45,15 @@ set key bottom left Left samplen 2 width 0
 #set yrange [1.e-18:]
 
 plot \
+	file_degradation_mix u 1:2 w lp \
+	lw 4 lc 0 \
+	title "Mix", \
 	file_degradation u 1:2 w l \
 	lw 4 lc 1 \
 	title "Total", \
-	for [i=1:ngeneration] file_degradation u 1:(column(i+2)) w l \
-	lw 4 lc i+1 dt 2 \
-	title sprintf("%d",i)
+	for [i=1:ngeneration*nmedia] l = (i-1)/ngeneration file_degradation index l u 1:(column((i-1)%ngeneration+2)) w l \
+	lw 4 lc (i-1)%ngeneration+2 dt l+1 \
+	title sprintf("%d:%d",l,(i-1)%ngeneration+1, l+1)
 
 set xlabel "Energy {/Times-Italic T} [eV]"
 set ylabel "Total Cross Sectionn {/Times-Italic Q}({/Times-Italic T}) [cm^2]"
@@ -61,15 +67,15 @@ set key bottom left Left samplen 2 width 0
 #set yrange [1.e-18:]
 
 plot \
-	file_result u 1:5 w l \
-	lw 4 lc 1 \
-	title "Ionization", \
-	file_result u 1:6 w l \
-	lw 4 lc 2 \
-	title "Singlet", \
-	file_result u 1:7 w l \
-	lw 4 lc 3 \
-	title "Triplet", \
+	for [i=1:nmedia] file_result index i-1 u 1:5 w l \
+	lw 4 lc 1 dt i \
+	title sprintf("Ionization %d",i), \
+	for [i=1:nmedia] file_result index i-1 u 1:6 w l \
+	lw 4 lc 2 dt i\
+	title sprintf("Singlet %d",i), \
+	for [i=1:nmedia] file_result index i-1 u 1:7 w l \
+	lw 4 lc 3 dt i \
+	title sprintf("Triplet %d",i), \
 
 set xlabel "Energy {/Times-Italic T} [eV]"
 set ylabel "{/Times-Italic T} {/Times-Italic y} {/Times-Italic Q} [cm^3]"
@@ -82,15 +88,15 @@ set format y "% h"
 set key top right Left samplen 2 width 0
 
 plot \
-	file_result u 1:8 w l \
-	lw 4 lc 1 \
-	title "Ionization", \
-	file_result u 1:9 w l \
-	lw 4 lc 2 \
-	title "Singlet", \
-	file_result u 1:10 w l \
-	lw 4 lc 3 \
-	title "Triplet"
+	for [i=1:nmedia] file_result index i-1 u 1:8 w l \
+	lw 4 lc 1 dt i \
+	title sprintf("Ionization %d",i), \
+	for [i=1:nmedia] file_result index i-1 u 1:9 w l \
+	lw 4 lc 2 dt i \
+	title sprintf("Singlet %d",i), \
+	for [i=1:nmedia] file_result index i-1 u 1:10 w l \
+	lw 4 lc 3 dt i \
+	title sprintf("Triplet %d",i)
 
 set xlabel "Energy {/Times-Italic T} [eV]"
 set ylabel "Mean Free Path {/Symbol l}({/Times-Italic T}) [nm]"
@@ -106,7 +112,7 @@ factor_cm_to_nm=1.e7
 plot \
 	file_result u 1:($11*factor_cm_to_nm) w l \
 	lw 4 lc 1 \
-	title "", \
+	title "Mix", \
 
 set auto
 
@@ -122,12 +128,12 @@ set key top right Left samplen 2 width 0
 
 factor_cm_to_nm=1.e7
 plot \
-	file_result u 1:($12*factor_cm_to_nm) w l \
-	lw 4 lc 1 \
-	title "Ionization", \
-	file_result u 1:($13*factor_cm_to_nm) w l \
-	lw 4 lc 2 \
-	title "Singlet", \
-	file_result u 1:($14*factor_cm_to_nm) w l \
-	lw 4 lc 3 \
-	title "Triplet", \
+	for [i=1:nmedia] file_result index i-1 u 1:($12*factor_cm_to_nm) w l \
+	lw 4 lc 1 dt i \
+	title sprintf("Ionization %d",i), \
+	for [i=1:nmedia] file_result index i-1 u 1:($13*factor_cm_to_nm) w l \
+	lw 4 lc 2 dt i \
+	title sprintf("Singlet %d",i), \
+	for [i=1:nmedia] file_result index i-1 u 1:($14*factor_cm_to_nm) w l \
+	lw 4 lc 3 dt i \
+	title sprintf("Triplet %d",i), \

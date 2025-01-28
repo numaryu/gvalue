@@ -281,6 +281,7 @@ contains
           end do
 
           write(unit,*)
+          write(unit,*)
        end do
 
        close(unit)
@@ -329,7 +330,7 @@ contains
               sum(self%worker(iwork)%medium(imedia)%yield_triplet)
       end if
 
-      write(unit,*)
+      write(unit,'("#")')
 
     end subroutine print_yield
 
@@ -359,7 +360,7 @@ contains
               sum(self%worker(iwork)%medium(imedia)%gvalue_triplet)
       end if
 
-      write(unit,*)
+      write(unit,'("#")')
 
     end subroutine print_gvalue
 
