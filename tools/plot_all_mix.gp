@@ -53,7 +53,7 @@ plot \
 	title "Total", \
 	for [i=1:ngeneration*nmedia] l = (i-1)/ngeneration file_degradation index l u 1:(column((i-1)%ngeneration+2)) w l \
 	lw 4 lc (i-1)%ngeneration+2 dt l+1 \
-	title sprintf("%d:%d",l,(i-1)%ngeneration+1, l+1)
+	title sprintf("%d:%d",l+1,(i-1)%ngeneration+1, l+1)
 
 set xlabel "Energy {/Times-Italic T} [eV]"
 set ylabel "Total Cross Sectionn {/Times-Italic Q}({/Times-Italic T}) [cm^2]"
