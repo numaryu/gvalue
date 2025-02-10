@@ -534,6 +534,7 @@ contains
           self%yield_ionize(io) = self%yield_ionize(io) + (-log(egrid%div)) * &
                ( sum(self%platzman_singlet_orbital(io, :)) &
                - 0.5*self%platzman_singlet_orbital(io, 1) )
+          self%yield_singlet(io) = 0.
        end if
 
        if (self%energy_triplet(io) < minval(self%energy_ionize)) then
@@ -544,6 +545,7 @@ contains
           self%yield_ionize(io) = self%yield_ionize(io) + (-log(egrid%div)) * &
                ( sum(self%platzman_triplet_orbital(io, :)) &
                - 0.5*self%platzman_triplet_orbital(io, 1) )
+          self%yield_triplet(io) = 0.
        end if
     end do
 
