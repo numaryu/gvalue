@@ -16,7 +16,7 @@ module mod_constants
   real, parameter :: elementary_charge_esu = elementary_charge_si * 10. * light_speed_si
 
   ! pi*e^4
-  real, parameter :: bb = dpi * (elementary_charge_esu**2 * 1.e-7/elementary_charge_si)**2
+  real, parameter :: bb = real(dpi) * (elementary_charge_esu**2 * 1.e-7/elementary_charge_si)**2
   real, parameter :: bb_compat = 6.51348e-14
   
 end module mod_constants
