@@ -26,8 +26,8 @@ module class_mixture
 
 contains
 
-  type(mixture) function init_mixture(ngrid, ngeneration)
-    integer, intent(in) :: ngrid, ngeneration
+  type(mixture) function init_mixture(ngrid)
+    integer, intent(in) :: ngrid
 
     if (.not.associated(init_mixture%stop_power_mixture)) allocate(init_mixture%stop_power_mixture(ngrid))
     init_mixture%stop_power_mixture=0.

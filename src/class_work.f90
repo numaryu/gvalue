@@ -129,7 +129,6 @@ contains
       use mod_file_utils, only: get_unused_unit, unit_stdin, unit_stdout
       type(subwork), intent(in out) :: worker
       integer :: unit
-      integer :: imedia
       integer :: ngeneration, nmedia
       namelist /param_calc/ ngeneration, nmedia
 
@@ -222,7 +221,7 @@ contains
 
     subroutine init_mixture(worker)
       type(subwork) , intent(in out) :: worker
-      worker%mediamix = mixture(worker%egrid%number, worker%ngeneration)
+      worker%mediamix = mixture(worker%egrid%number)
     end subroutine init_mixture
 
     subroutine calculate_mixture(val, ratio, mixed)
