@@ -416,47 +416,26 @@ contains
        call get_unused_unit(unit)
        open(unit, file=trim(file))
 
-       do imedia = 1, self%worker(iwork)%nmedia
-          write(unit,'("#")')
-          write(unit,'("#",1x 2a)') 'Media: ', trim(self%worker(iwork)%medium(imedia)%name)
-          write(unit,'("#")')
-          write(unit,'("#",2(1x,a20))', advance='no') 'Energy', 'Degradation (sum)'
-          do igen = 1, ngen
-             write(unit,'(1x, a16, 1x, i3)', advance='no') 'Degradation ', igen
-          end do
-          write(unit,*)
-
-          do ie = 1, self%worker(iwork)%egrid%number
-             write(unit,'(1x,2(1x,e20.12))', advance='no') &
-                  self%worker(iwork)%egrid%val(ie), &
-                  sum(self%worker(iwork)%medium(imedia)%degradation_gen(:, ie))
-             do igen = 1, ngen
-                write(unit,'(1x,e20.12)', advance='no') &
-                     self%worker(iwork)%medium(imedia)%degradation_gen(igen, ie)
-             end do
-             write(unit,*)
-          end do
-
-          write(unit,*)
-          write(unit,*)
+       imedia = 1
+       write(unit,'("#",2(1x,a20))', advance='no') 'Energy', 'Degradation (sum)'
+       do igen = 1, ngen
+          write(unit,'(1x, a16, 1x, i3)', advance='no') 'Degradation ', igen
        end do
-
-       close(unit)
-
-       file = trim(self%worker(iwork)%name)//'_degradation_mix.dat'
-
-       call get_unused_unit(unit)
-       open(unit, file=trim(file))
-
-       write(unit,'("#",2(1x,a20))') 'Energy', 'Degradation (mix)'
+       write(unit,*)
 
        do ie = 1, self%worker(iwork)%egrid%number
-          write(unit,'(1x,2(1x,e20.12))') &
+          write(unit,'(1x,2(1x,e20.12))', advance='no') &
                self%worker(iwork)%egrid%val(ie), &
-               self%worker(iwork)%mediamix%degradation_mixture(ie)
+               sum(self%worker(iwork)%medium(imedia)%degradation_gen(:, ie))
+          do igen = 1, ngen
+             write(unit,'(1x,e20.12)', advance='no') &
+                  self%worker(iwork)%medium(imedia)%degradation_gen(igen, ie)
+          end do
+          write(unit,*)
        end do
 
        close(unit)
+
     end do
 
   end subroutine print_results_degradation
