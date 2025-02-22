@@ -107,12 +107,20 @@ contains
           do imedia = 1, self%worker(iwork)%nmedia
              call self%worker(iwork)%medium(imedia)%calculate_degradation(self%worker(iwork)%egrid, &
                   self%worker(iwork)%mediamix, igen)
-             degradation(imedia,:) = sum(self%worker(iwork)%medium(imedia)%degradation_gen(:,:), dim=1)
+             ! use degradaion as a temporary copy
+             degradation(imedia,:) = self%worker(iwork)%medium(imedia)%degradation_gen(igen,:)
+          end do
+          call calculate_mixture(degradation, self%worker(iwork)%mediamix%degradation_mixture, &
+               op = 'sum')
+          do imedia = 1, self%worker(iwork)%nmedia
+             self%worker(iwork)%medium(imedia)%degradation_gen(igen,:) = &
+                  self%worker(iwork)%mediamix%degradation_mixture
           end do
        end do
 
-       call calculate_mixture(degradation, self%worker(iwork)%mediamix%degradation_mixture, &
-            ratio = number_density/sum(number_density))
+       ! degradation_gen is common for media
+       self%worker(iwork)%mediamix%degradation_mixture = &
+            sum(self%worker(iwork)%medium(1)%degradation_gen(:,:), dim=1)
 
        do imedia = 1, self%worker(iwork)%nmedia
           call self%worker(iwork)%medium(imedia)%calculate_yield(self%worker(iwork)%egrid, &
