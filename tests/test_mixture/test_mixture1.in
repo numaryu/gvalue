@@ -1,0 +1,15 @@
+&param_calc
+ ngeneration = 6
+ nmedia = 2
+/
+
+&param_medium
+ file_medium = "helium_nml.in" "neon_nml.in"
+ number_density = 0.25854e20 0.010213e20
+/
+
+&param_grid
+ nediv = 40
+ egrid_max = 1.e5
+ egrid_min = 1.e0
+/

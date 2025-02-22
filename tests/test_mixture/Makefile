@@ -9,11 +9,12 @@ BIN	= gvalue
 BINDIR	= ../../src/
 PARAMDIR = ../../parameters
 PARAM	= helium_nml.in neon_nml.in
-INPUT	= test_mixture.in
+INPUT	= $(shell ls test_mixture?.in)
+$(warning $(INPUT))
 
-DATAFILE = $(shell echo $(INPUT) | sed "s/.in/\.dat/")
-DATAFILE += $(shell echo $(INPUT) | sed "s/.in/\_degradation*.dat/")
-DATAFILE += $(shell echo $(INPUT) | sed "s/.in/\_gvalue.dat/")
+DATAFILE = $(shell echo $(INPUT) | sed "s/.in/\.dat/g")
+DATAFILE += $(shell echo $(INPUT) | sed "s/.in/\_degradation.dat/g")
+DATAFILE += $(shell echo $(INPUT) | sed "s/.in/\_gvalue.dat/g")
 
 all:	run clean
 
@@ -29,7 +30,9 @@ run:
 	  $(LN) -s $(PARAMDIR)/$${pfile} ;\
 	done
 
-	./$(BIN) $(INPUT)
+	for f in $(INPUT); do \
+	  ./$(BIN) $${f} ;\
+	done
 	pytest -s -v --junit-xml $(TEST_NAME).xml
 
 clean:
