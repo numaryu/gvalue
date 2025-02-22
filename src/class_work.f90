@@ -92,7 +92,7 @@ contains
        end do
 
        call calculate_mixture(stop_power, self%worker(iwork)%mediamix%stop_power_mixture, &
-            ratio = number_density/sum(number_density))
+            op = 'sum')
 
        do igen = 1, self%worker(iwork)%ngeneration
           do imedia = 1, self%worker(iwork)%nmedia
