@@ -1,5 +1,6 @@
 runname = "test_helium"
-outfile = "results.eps"
+#outfile = "results.eps"
+outfile = "results.pdf"
 
 nmedia = 1
 ngeneration = 4
@@ -8,7 +9,8 @@ file_result = sprintf("%s.dat",runname)
 file_degradation = sprintf("%s_degradation.dat",runname)
 file_degradation_mix = sprintf("%s_degradation_mix.dat",runname)
 
-set terminal postscript enhanced color eps "Times-Roman" 30 size 10in,10.5in
+#set terminal postscript enhanced color eps "Times-Roman" 30 size 10in,10.5in
+set terminal pdf size 10in,10.5in
 set output outfile
 
 
