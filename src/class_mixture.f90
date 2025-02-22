@@ -32,6 +32,7 @@ contains
     if (.not.associated(init_mixture%stop_power_mixture)) allocate(init_mixture%stop_power_mixture(ngrid))
     init_mixture%stop_power_mixture=0.
     if (.not.associated(init_mixture%degradation_mixture)) allocate(init_mixture%degradation_mixture(ngrid))
+    init_mixture%degradation_mixture=0.
     if (.not.associated(init_mixture%mean_free_path_mixture)) &
          allocate(init_mixture%mean_free_path_mixture(ngrid))
   end function init_mixture
