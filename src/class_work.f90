@@ -91,8 +91,8 @@ contains
           number_density(imedia) = self%worker(iwork)%medium(imedia)%number_density
        end do
 
-       call calculate_mixture(stop_power, number_density/sum(number_density), &
-            self%worker(iwork)%mediamix%stop_power_mixture)
+       call calculate_mixture(stop_power, self%worker(iwork)%mediamix%stop_power_mixture, &
+            ratio = number_density/sum(number_density))
 
        do imedia = 1, self%worker(iwork)%nmedia
           call self%worker(iwork)%medium(imedia)%calculate_degradation(self%worker(iwork)%egrid, &
@@ -100,8 +100,8 @@ contains
           degradation(imedia,:) = sum(self%worker(iwork)%medium(imedia)%degradation_gen(:,:), dim=1)
        end do
 
-       call calculate_mixture(degradation, number_density/sum(number_density), &
-            self%worker(iwork)%mediamix%degradation_mixture)
+       call calculate_mixture(degradation, self%worker(iwork)%mediamix%degradation_mixture, &
+            ratio = number_density/sum(number_density))
 
        do imedia = 1, self%worker(iwork)%nmedia
           call self%worker(iwork)%medium(imedia)%calculate_yield(self%worker(iwork)%egrid, &
@@ -109,8 +109,9 @@ contains
           total_cross_section_total(imedia,:) = self%worker(iwork)%medium(imedia)%total_cross_section_total
        end do
 
-       call calculate_mixture(total_cross_section_total, number_density, &
-            self%worker(iwork)%mediamix%mean_free_path_mixture)
+       call calculate_mixture(total_cross_section_total, &
+            self%worker(iwork)%mediamix%mean_free_path_mixture, &
+            ratio = number_density)
        where (self%worker(iwork)%mediamix%mean_free_path_mixture /= 0.)
           self%worker(iwork)%mediamix%mean_free_path_mixture = &
                1./self%worker(iwork)%mediamix%mean_free_path_mixture
@@ -224,10 +225,24 @@ contains
       worker%mediamix = mixture(worker%egrid%number)
     end subroutine init_mixture
 
-    subroutine calculate_mixture(val, ratio, mixed)
-      real, intent(in) :: val(:,:), ratio(:)
+    subroutine calculate_mixture(val, mixed, ratio, op)
+      real, intent(in) :: val(:,:)
       real, intent(out) :: mixed(:)
-      mixed(:) = sum(val(:,:)*spread(ratio, 2, size(val,2)), dim=1)
+      real, intent(in), optional :: ratio(:)
+      character (len=*), optional :: op
+      real :: ratio2(size(val,1), size(val,2))
+      if (present(ratio)) then
+         ratio2 = spread(ratio, 2, size(val,2))
+      else if (present(op)) then
+         if (op == 'sum') then
+            ratio2 = 1
+         else if (op == 'mean') then
+            ratio2 = 1./size(val,1)
+         else
+            stop 'invalid option'
+         end if
+      end if
+      mixed(:) = sum(val*ratio2, dim=1)
     end subroutine calculate_mixture
 
   end subroutine execute
