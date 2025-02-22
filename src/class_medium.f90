@@ -373,60 +373,51 @@ contains
 
     nenergy_max = egrid%grid_number(minval(self%energy_triplet))
 
-    if (ngen == 1) then
+    do io = 1, self%number
+       energy_ionize = self%energy_ionize(io)
+       energy_kinetic = self%energy_kinetic(io)
 
-       where(mediamix%stop_power_mixture /= 0.)
-          self%degradation_gen(1, :) = 1./mediamix%stop_power_mixture(:)
-       end where
+       energy1_max = (egrid%val_max - (2**(ngen-2)-1)*energy_ionize)/(2**(ngen-2))
+       if (ngen == 2) energy1_max = egrid%val_max
+       energy2_max = (egrid%val_max - (2**(ngen-1)-1)*energy_ionize)/(2**(ngen-1))
+       if (energy2_max < minval(self%energy_triplet)) cycle
 
-    else
+       nenergy1_max = egrid%grid_number(energy1_max)
+       nenergy2_max = egrid%grid_number(energy2_max)
 
-       do io = 1, self%number
-          energy_ionize = self%energy_ionize(io)
-          energy_kinetic = self%energy_kinetic(io)
-
-          energy1_max = (egrid%val_max - (2**(ngen-2)-1)*energy_ionize)/(2**(ngen-2))
-          if (ngen == 2) energy1_max = egrid%val_max
-          energy2_max = (egrid%val_max - (2**(ngen-1)-1)*energy_ionize)/(2**(ngen-1))
-          if (energy2_max < minval(self%energy_triplet)) cycle
-
-          nenergy1_max = egrid%grid_number(energy1_max)
-          nenergy2_max = egrid%grid_number(energy2_max)
-
-          ! i: index of T2
-          do i = nenergy2_max + 1, nenergy_max
-             energy2 = egrid%val(i)
-             denergy2 = egrid%val(i-1) - egrid%val(i)
-             ! j: index of T1
-             do j = nenergy1_max + 1, nenergy_max
-                energy1 = egrid%val(j)
-                denergy1 = egrid%val(j-1) - egrid%val(j)
-                if (energy1 > 2.0*energy2 + energy_ionize) then
-                   self%degradation_gen(ngen, i) = self%degradation_gen(ngen, i) &
-                        + self%number_electrons(io) * self%number_density &
-                        * self%degradation_gen(ngen-1, j) &
-                        * denergy1 * denergy2 &
-                        * bb/(energy1 + energy_ionize + energy_kinetic) * &
-                        ( 1.0/(energy2 + energy_ionize)**2 &
-                        + 4.0/3.0 * energy_kinetic/(energy2 + energy_ionize)**3 &
-                        + 4.0/3.0 * energy_kinetic/(energy1 - energy2)**3 &
-                        + 1.0/(energy1 - energy2)**2 &
-                        )
-                else
-                   exit
-                end if
-             end do
+       ! i: index of T2
+       do i = nenergy2_max + 1, nenergy_max
+          energy2 = egrid%val(i)
+          denergy2 = egrid%val(i-1) - egrid%val(i)
+          ! j: index of T1
+          do j = nenergy1_max + 1, nenergy_max
+             energy1 = egrid%val(j)
+             denergy1 = egrid%val(j-1) - egrid%val(j)
+             if (energy1 > 2.0*energy2 + energy_ionize) then
+                self%degradation_gen(ngen, i) = self%degradation_gen(ngen, i) &
+                     + self%number_electrons(io) * self%number_density &
+                     * self%degradation_gen(ngen-1, j) &
+                     * denergy1 * denergy2 &
+                     * bb/(energy1 + energy_ionize + energy_kinetic) * &
+                     ( 1.0/(energy2 + energy_ionize)**2 &
+                     + 4.0/3.0 * energy_kinetic/(energy2 + energy_ionize)**3 &
+                     + 4.0/3.0 * energy_kinetic/(energy1 - energy2)**3 &
+                     + 1.0/(energy1 - energy2)**2 &
+                     )
+             else
+                exit
+             end if
           end do
        end do
+    end do
 
-       do i = 2, nenergy_max
-          self%degradation_gen(ngen, i) = self%degradation_gen(ngen, i-1) &
-               + self%degradation_gen(ngen,i)
-       end do
-       where (mediamix%stop_power_mixture /= 0.)
-          self%degradation_gen(ngen, :) = self%degradation_gen(ngen, :)/mediamix%stop_power_mixture(:)
-       end where
-    end if
+    do i = 2, nenergy_max
+       self%degradation_gen(ngen, i) = self%degradation_gen(ngen, i-1) &
+            + self%degradation_gen(ngen,i)
+    end do
+    where (mediamix%stop_power_mixture /= 0.)
+       self%degradation_gen(ngen, :) = self%degradation_gen(ngen, :)/mediamix%stop_power_mixture(:)
+    end where
 
     return
 

@@ -94,7 +94,16 @@ contains
        call calculate_mixture(stop_power, self%worker(iwork)%mediamix%stop_power_mixture, &
             op = 'sum')
 
-       do igen = 1, self%worker(iwork)%ngeneration
+       where(self%worker(iwork)%mediamix%stop_power_mixture /= 0.)
+          self%worker(iwork)%mediamix%degradation_mixture = &
+               1./self%worker(iwork)%mediamix%stop_power_mixture
+       end where
+       do imedia = 1, self%worker(iwork)%nmedia
+          self%worker(iwork)%medium(imedia)%degradation_gen(1,:) = &
+               self%worker(iwork)%mediamix%degradation_mixture
+       end do
+
+       do igen = 2, self%worker(iwork)%ngeneration
           do imedia = 1, self%worker(iwork)%nmedia
              call self%worker(iwork)%medium(imedia)%calculate_degradation(self%worker(iwork)%egrid, &
                   self%worker(iwork)%mediamix, igen)
