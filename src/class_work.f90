@@ -63,7 +63,7 @@ contains
 
   subroutine execute(self)
     class(work) :: self
-    integer :: iwork, imedia
+    integer :: iwork, imedia, igen
     real, allocatable :: stop_power(:,:), degradation(:,:)
     real, allocatable :: number_density(:)
     real, allocatable :: total_cross_section_total(:,:)
@@ -94,10 +94,12 @@ contains
        call calculate_mixture(stop_power, self%worker(iwork)%mediamix%stop_power_mixture, &
             ratio = number_density/sum(number_density))
 
-       do imedia = 1, self%worker(iwork)%nmedia
-          call self%worker(iwork)%medium(imedia)%calculate_degradation(self%worker(iwork)%egrid, &
-               self%worker(iwork)%mediamix, self%worker(iwork)%ngeneration)
-          degradation(imedia,:) = sum(self%worker(iwork)%medium(imedia)%degradation_gen(:,:), dim=1)
+       do igen = 1, self%worker(iwork)%ngeneration
+          do imedia = 1, self%worker(iwork)%nmedia
+             call self%worker(iwork)%medium(imedia)%calculate_degradation(self%worker(iwork)%egrid, &
+                  self%worker(iwork)%mediamix, igen)
+             degradation(imedia,:) = sum(self%worker(iwork)%medium(imedia)%degradation_gen(:,:), dim=1)
+          end do
        end do
 
        call calculate_mixture(degradation, self%worker(iwork)%mediamix%degradation_mixture, &

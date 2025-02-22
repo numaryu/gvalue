@@ -355,7 +355,7 @@ contains
 
   end function integrate_E_sigma
 
-  recursive subroutine calculate_degradation(self, egrid, mediamix, ngen)
+  subroutine calculate_degradation(self, egrid, mediamix, ngen)
     use mod_constants, only: bb
     use class_grid, only: grid
     use class_mixture, only: mixture
@@ -381,8 +381,6 @@ contains
 
     else
 
-       call calculate_degradation(self, egrid, mediamix, ngen-1)
-       
        do io = 1, self%number
           energy_ionize = self%energy_ionize(io)
           energy_kinetic = self%energy_kinetic(io)
