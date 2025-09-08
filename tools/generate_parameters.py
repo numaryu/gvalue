@@ -1,5 +1,6 @@
 import csv
 from argparse import ArgumentParser
+from argparse import RawTextHelpFormatter
 
 def generate_parameters(filename):
     print(filename)
@@ -61,8 +62,18 @@ def generate_parameters(filename):
         fp.write(f"/\n")
 
 if __name__ == '__main__':
+    desc = 'Generates a parameter file from a CSV input file. The CSV format is as follows.\n' + \
+            'Columns 0 and 1 contain key=value pairs.\n' + \
+            'Row 0 gives the name.\n' + \
+            'Row 1 gives the lowest singlet energy.\n' + \
+            'Row 2 gives the lowest triplet energy.\n' + \
+            'Row 3 gives the multiplicative factor for the kinetic energy.\n' + \
+            'Row 4 gives the exponent for the kinetic energy, such that\n' + \
+            'the kinetic energy is factor*(ionization energy)^power.\n' + \
+            'Rows 5 and below list the ionization energies in ascending order as required.\n' + \
+            '\nThe key fields are ignored by the program and may be used only as labels for convenience.'
     # parse arguments
-    parser = ArgumentParser()
+    parser = ArgumentParser(description=desc, formatter_class=RawTextHelpFormatter)
     parser.add_argument('filename')
 
     args = parser.parse_args()
