@@ -37,7 +37,7 @@ def generate_parameters(filename):
         fp.write(f" name = '{name}'\n")
         fp.write(f"/\n")
         fp.write(f"\n")
-        fp.write(f"&parameters_per_orbitals\n")
+        fp.write(f"&params_per_orbitals\n")
         fp.write(f" {'energy_ionize':16s} = ")
         for io in range(norbital):
             fp.write(f" {ionize_energy[io]:8.2f}")
