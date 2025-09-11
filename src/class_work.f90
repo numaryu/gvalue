@@ -180,15 +180,13 @@ contains
       integer :: imedia
       character (len=100) :: file_medium(worker%nmedia)
       real :: number_density(worker%nmedia)
-      integer :: norbital
       character (len=100) :: name
       logical :: ex
       namelist /param_medium/ file_medium, number_density
-      namelist /param_orbital/ norbital, name
+      namelist /param_orbital/ name
 
       ! default values
       number_density = 1.
-      norbital = 1
       file_medium = ''
 
       call get_unused_unit(unit)
@@ -207,8 +205,7 @@ contains
          close(unit)
          write(unit_stdout, param_orbital)
 
-         worker%medium(imedia) = medium(norbital, name, &
-              file_medium(imedia), number_density(imedia))
+         worker%medium(imedia) = medium(name, file_medium(imedia), number_density(imedia))
       end do
 
     end subroutine init_medium

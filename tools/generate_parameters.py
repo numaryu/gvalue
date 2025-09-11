@@ -34,7 +34,6 @@ def generate_parameters(filename):
         fp.write(f"!\n")
         fp.write(f"\n")
         fp.write(f"&param_orbital\n")
-        fp.write(f" norbital = {norbital:0d}\n")
         fp.write(f" name = '{name}'\n")
         fp.write(f"/\n")
         fp.write(f"\n")

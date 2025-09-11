@@ -66,30 +66,23 @@ module class_medium
 
 contains
 
-  type(medium) function init_medium(norbital, name, file_medium, number_density)
-    integer, intent(in) :: norbital
+  type(medium) function init_medium(name, file_medium, number_density)
     character (len=*), intent(in) :: name
     character (len=*), intent(in) :: file_medium
     real, intent(in) :: number_density
-    
-    init_medium%number = norbital
+
     init_medium%name = name
     init_medium%number_density = number_density
 
-    if (.not.associated(init_medium%energy_ionize)) allocate(init_medium%energy_ionize(norbital))
-    if (.not.associated(init_medium%energy_kinetic)) allocate(init_medium%energy_kinetic(norbital))
-    if (.not.associated(init_medium%energy_singlet)) allocate(init_medium%energy_singlet(norbital))
-    if (.not.associated(init_medium%energy_triplet)) allocate(init_medium%energy_triplet(norbital))
-    if (.not.associated(init_medium%number_electrons)) allocate(init_medium%number_electrons(norbital))
+    call read_params(init_medium, file_medium)
 
-    if (.not.associated(init_medium%yield_ionize)) allocate(init_medium%yield_ionize(norbital))
-    if (.not.associated(init_medium%gvalue_ionize)) allocate(init_medium%gvalue_ionize(norbital))
-    if (.not.associated(init_medium%yield_singlet)) allocate(init_medium%yield_singlet(norbital))
-    if (.not.associated(init_medium%gvalue_singlet)) allocate(init_medium%gvalue_singlet(norbital))
-    if (.not.associated(init_medium%yield_triplet)) allocate(init_medium%yield_triplet(norbital))
-    if (.not.associated(init_medium%gvalue_triplet)) allocate(init_medium%gvalue_triplet(norbital))
+    if (.not.associated(init_medium%yield_ionize)) allocate(init_medium%yield_ionize(init_medium%number))
+    if (.not.associated(init_medium%gvalue_ionize)) allocate(init_medium%gvalue_ionize(init_medium%number))
+    if (.not.associated(init_medium%yield_singlet)) allocate(init_medium%yield_singlet(init_medium%number))
+    if (.not.associated(init_medium%gvalue_singlet)) allocate(init_medium%gvalue_singlet(init_medium%number))
+    if (.not.associated(init_medium%yield_triplet)) allocate(init_medium%yield_triplet(init_medium%number))
+    if (.not.associated(init_medium%gvalue_triplet)) allocate(init_medium%gvalue_triplet(init_medium%number))
 
-    call read_params(init_medium, norbital, file_medium)
   end function init_medium
 
   subroutine destroy(self)
@@ -110,19 +103,19 @@ contains
     call finish_orbital_vars(self)
   end subroutine destroy
 
-  subroutine read_params(self, norbital, file)
+  subroutine read_params(self, file)
     use mod_file_utils, only: get_unused_unit
     class(medium) :: self
-    integer, intent(in) :: norbital
+    integer, parameter :: norbital_max = 1000
     character (len=*), intent(in) :: file
 
     integer :: unit
     
-    real :: energy_ionize(norbital)
-    real :: energy_kinetic(norbital)
-    real :: energy_singlet(norbital)
-    real :: energy_triplet(norbital)
-    integer :: number_electrons(norbital)
+    real :: energy_ionize(norbital_max) = 0.
+    real :: energy_kinetic(norbital_max) = 0.
+    real :: energy_singlet(norbital_max) = 0.
+    real :: energy_triplet(norbital_max) = 0.
+    integer :: number_electrons(norbital_max) = 0
     
     namelist /params_per_orbitals/ energy_ionize, energy_kinetic, &
          energy_singlet, energy_triplet, number_electrons
@@ -132,11 +125,19 @@ contains
     read(unit,params_per_orbitals)
     close(unit)
 
-    self%energy_ionize(1:norbital) = energy_ionize(1:norbital)
-    self%energy_kinetic(1:norbital) = energy_kinetic(1:norbital)
-    self%energy_singlet(1:norbital) = energy_singlet(1:norbital)
-    self%energy_triplet(1:norbital) = energy_triplet(1:norbital)
-    self%number_electrons(1:norbital) = number_electrons(1:norbital)
+    self%number = count(number_electrons /= 0)
+
+    if (.not.associated(self%energy_ionize)) allocate(self%energy_ionize(self%number))
+    if (.not.associated(self%energy_kinetic)) allocate(self%energy_kinetic(self%number))
+    if (.not.associated(self%energy_singlet)) allocate(self%energy_singlet(self%number))
+    if (.not.associated(self%energy_triplet)) allocate(self%energy_triplet(self%number))
+    if (.not.associated(self%number_electrons)) allocate(self%number_electrons(self%number))
+
+    self%energy_ionize(1:self%number) = energy_ionize(1:self%number)
+    self%energy_kinetic(1:self%number) = energy_kinetic(1:self%number)
+    self%energy_singlet(1:self%number) = energy_singlet(1:self%number)
+    self%energy_triplet(1:self%number) = energy_triplet(1:self%number)
+    self%number_electrons(1:self%number) = number_electrons(1:self%number)
   end subroutine read_params
 
   subroutine init_orbital_vars(self, ngrid, ngeneration)

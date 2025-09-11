@@ -3,7 +3,6 @@
 !
 
 &param_orbital
- norbital = 28
  name = 'PMMA'
 /
 
