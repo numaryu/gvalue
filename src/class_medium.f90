@@ -356,14 +356,14 @@ contains
 
   end function integrate_E_sigma
 
-  subroutine calculate_degradation(self, egrid, mediamix, ngen)
+  subroutine calculate_degradation(self, egrid, mediamix, igen)
     use mod_constants, only: bb
     use class_grid, only: grid
     use class_mixture, only: mixture
     class(medium) :: self
     class(grid), intent(in) :: egrid
     class(mixture), intent(in) :: mediamix
-    integer, intent(in) :: ngen
+    integer, intent(in) :: igen
     real :: energy1, denergy1, energy2, denergy2
     real :: energy_ionize, energy_kinetic
     integer :: io
@@ -378,9 +378,9 @@ contains
        energy_ionize = self%energy_ionize(io)
        energy_kinetic = self%energy_kinetic(io)
 
-       energy1_max = (egrid%val_max - (2**(ngen-2)-1)*energy_ionize)/(2**(ngen-2))
-       if (ngen == 2) energy1_max = egrid%val_max
-       energy2_max = (egrid%val_max - (2**(ngen-1)-1)*energy_ionize)/(2**(ngen-1))
+       energy1_max = (egrid%val_max - (2**(igen-2)-1)*energy_ionize)/(2**(igen-2))
+       if (igen == 2) energy1_max = egrid%val_max
+       energy2_max = (egrid%val_max - (2**(igen-1)-1)*energy_ionize)/(2**(igen-1))
        if (energy2_max < minval(self%energy_triplet)) cycle
 
        nenergy1_max = egrid%grid_number(energy1_max)
@@ -395,9 +395,9 @@ contains
              energy1 = egrid%val(j)
              denergy1 = egrid%val(j-1) - egrid%val(j)
              if (energy1 > 2.0*energy2 + energy_ionize) then
-                self%degradation_gen(ngen, i) = self%degradation_gen(ngen, i) &
+                self%degradation_gen(igen, i) = self%degradation_gen(igen, i) &
                      + self%number_electrons(io) * self%number_density &
-                     * self%degradation_gen(ngen-1, j) &
+                     * self%degradation_gen(igen-1, j) &
                      * denergy1 * denergy2 &
                      * bb/(energy1 + energy_ionize + energy_kinetic) * &
                      ( 1.0/(energy2 + energy_ionize)**2 &
@@ -413,11 +413,11 @@ contains
     end do
 
     do i = 2, nenergy_max
-       self%degradation_gen(ngen, i) = self%degradation_gen(ngen, i-1) &
-            + self%degradation_gen(ngen,i)
+       self%degradation_gen(igen, i) = self%degradation_gen(igen, i-1) &
+            + self%degradation_gen(igen,i)
     end do
     where (mediamix%stop_power_mixture /= 0.)
-       self%degradation_gen(ngen, :) = self%degradation_gen(ngen, :)/mediamix%stop_power_mixture(:)
+       self%degradation_gen(igen, :) = self%degradation_gen(igen, :)/mediamix%stop_power_mixture(:)
     end where
 
     return
