@@ -24,6 +24,11 @@ module class_medium
      real, pointer, public :: yield_singlet(:) => null(), gvalue_singlet(:) => null()
      real, pointer, public :: yield_triplet(:) => null(), gvalue_triplet(:) => null()
 
+     ! yield Ni and G value of processes (per generation and orbital)
+     real, pointer, public :: yield_ionize_gen(:,:) => null(), gvalue_ionize_gen(:,:) => null()
+     real, pointer, public :: yield_singlet_gen(:,:) => null(), gvalue_singlet_gen(:,:) => null()
+     real, pointer, public :: yield_triplet_gen(:,:) => null(), gvalue_triplet_gen(:,:) => null()
+
      ! stopping power S(energy), Si(energy) (per orbital)
      real, pointer :: stop_power_orbital(:,:) => null()
      real, pointer, public :: stop_power(:) => null()
@@ -46,6 +51,11 @@ module class_medium
      real, pointer, public :: platzman_singlet_orbital(:,:) => null()
      real, pointer, public :: platzman_triplet_orbital(:,:) => null()
 
+     ! platzman energy*y(generation, energy)*Q(energy) (per generation and orbital)
+     real, pointer, public :: platzman_ionize_orbital_gen(:,:,:) => null()
+     real, pointer, public :: platzman_singlet_orbital_gen(:,:,:) => null()
+     real, pointer, public :: platzman_triplet_orbital_gen(:,:,:) => null()
+
      ! range
      real, pointer, public :: range_ionize(:) => null()
      real, pointer, public :: range_singlet(:) => null()
@@ -66,10 +76,11 @@ module class_medium
 
 contains
 
-  type(medium) function init_medium(name, file_medium, number_density)
+  type(medium) function init_medium(name, file_medium, number_density, ngeneration)
     character (len=*), intent(in) :: name
     character (len=*), intent(in) :: file_medium
     real, intent(in) :: number_density
+    integer, intent(in) :: ngeneration
 
     init_medium%name = name
     init_medium%number_density = number_density
@@ -82,6 +93,19 @@ contains
     if (.not.associated(init_medium%gvalue_singlet)) allocate(init_medium%gvalue_singlet(init_medium%number))
     if (.not.associated(init_medium%yield_triplet)) allocate(init_medium%yield_triplet(init_medium%number))
     if (.not.associated(init_medium%gvalue_triplet)) allocate(init_medium%gvalue_triplet(init_medium%number))
+
+    if (.not.associated(init_medium%yield_ionize_gen)) &
+         allocate(init_medium%yield_ionize_gen(init_medium%number, ngeneration))
+    if (.not.associated(init_medium%gvalue_ionize_gen)) &
+         allocate(init_medium%gvalue_ionize_gen(init_medium%number,ngeneration))
+    if (.not.associated(init_medium%yield_singlet_gen)) &
+         allocate(init_medium%yield_singlet_gen(init_medium%number, ngeneration))
+    if (.not.associated(init_medium%gvalue_singlet_gen)) &
+         allocate(init_medium%gvalue_singlet_gen(init_medium%number, ngeneration))
+    if (.not.associated(init_medium%yield_triplet_gen)) &
+         allocate(init_medium%yield_triplet_gen(init_medium%number,ngeneration))
+    if (.not.associated(init_medium%gvalue_triplet_gen)) &
+         allocate(init_medium%gvalue_triplet_gen(init_medium%number, ngeneration))
 
   end function init_medium
 
@@ -99,6 +123,13 @@ contains
     if (associated(self%gvalue_singlet)) nullify(self%gvalue_singlet)
     if (associated(self%yield_triplet)) nullify(self%yield_triplet)
     if (associated(self%gvalue_triplet)) nullify(self%gvalue_triplet)
+
+    if (associated(self%yield_ionize_gen)) nullify(self%yield_ionize_gen)
+    if (associated(self%gvalue_ionize_gen)) nullify(self%gvalue_ionize_gen)
+    if (associated(self%yield_singlet_gen)) nullify(self%yield_singlet_gen)
+    if (associated(self%gvalue_singlet_gen)) nullify(self%gvalue_singlet_gen)
+    if (associated(self%yield_triplet_gen)) nullify(self%yield_triplet_gen)
+    if (associated(self%gvalue_triplet_gen)) nullify(self%gvalue_triplet_gen)
 
     call finish_orbital_vars(self)
   end subroutine destroy
@@ -183,6 +214,16 @@ contains
     self%platzman_singlet_orbital = 0.0
     self%platzman_triplet_orbital = 0.0
 
+    if (.not.associated(self%platzman_ionize_orbital_gen)) &
+         allocate(self%platzman_ionize_orbital_gen(self%number, ngeneration, ngrid))
+    if (.not.associated(self%platzman_singlet_orbital_gen)) &
+         allocate(self%platzman_singlet_orbital_gen(self%number, ngeneration, ngrid))
+    if (.not.associated(self%platzman_triplet_orbital_gen)) &
+         allocate(self%platzman_triplet_orbital_gen(self%number, ngeneration, ngrid))
+    self%platzman_ionize_orbital_gen = 0.0
+    self%platzman_singlet_orbital_gen = 0.0
+    self%platzman_triplet_orbital_gen = 0.0
+
     if (.not.associated(self%range_ionize)) allocate(self%range_ionize(ngrid))
     if (.not.associated(self%range_singlet)) allocate(self%range_singlet(ngrid))
     if (.not.associated(self%range_triplet)) allocate(self%range_triplet(ngrid))
@@ -214,6 +255,10 @@ contains
     if (associated(self%platzman_ionize_orbital)) nullify(self%platzman_ionize_orbital)
     if (associated(self%platzman_singlet_orbital)) nullify(self%platzman_singlet_orbital)
     if (associated(self%platzman_triplet_orbital)) nullify(self%platzman_triplet_orbital)
+
+    if (associated(self%platzman_ionize_orbital_gen)) nullify(self%platzman_ionize_orbital_gen)
+    if (associated(self%platzman_singlet_orbital_gen)) nullify(self%platzman_singlet_orbital_gen)
+    if (associated(self%platzman_triplet_orbital_gen)) nullify(self%platzman_triplet_orbital_gen)
 
     if (associated(self%range_ionize)) nullify(self%range_ionize)
     if (associated(self%range_singlet)) nullify(self%range_singlet)
@@ -424,13 +469,14 @@ contains
 
   end subroutine calculate_degradation
 
-  subroutine calculate_yield(self, egrid, mediamix)
+  subroutine calculate_yield(self, egrid, mediamix, ngeneration)
     use class_grid, only: grid
     use class_mixture, only: mixture
     class(medium) :: self
     class(grid), intent(in) :: egrid
     class(mixture), intent(in) :: mediamix
-    integer :: io, ie
+    integer, intent(in) :: ngeneration
+    integer :: io, ie, igen
     integer :: ne1, ne2, ne3
     integer :: ne1_max = 1, ne2_max = 1, ne3_max = 1
     real :: t_over_s(egrid%number)
@@ -539,6 +585,48 @@ contains
        end if
     end do
 
+    do igen = 1, ngeneration
+       do io = 1, self%number
+          self%platzman_ionize_orbital_gen(io, igen, :) = egrid%val * &
+               self%degradation_gen(igen, :) * &
+               self%total_cross_section_ionize_orbital(io, :)
+          self%platzman_singlet_orbital_gen(io, igen, :) = egrid%val * &
+               self%degradation_gen(igen, :) * &
+               self%total_cross_section_singlet_orbital(io, :)
+          self%platzman_triplet_orbital_gen(io, igen, :) = egrid%val * &
+               self%degradation_gen(igen, :) * &
+               self%total_cross_section_triplet_orbital(io, :)
+
+          ! integrate over energy
+          ! minus sign is because the energy grid is in the descending order
+          self%yield_ionize_gen(io, igen) = (-log(egrid%div)) * &
+               ( sum(self%platzman_ionize_orbital_gen(io, igen, :)) &
+               - 0.5*self%platzman_ionize_orbital_gen(io, igen, 1) )
+
+          if (self%energy_singlet(io) < minval(self%energy_ionize)) then
+             self%yield_singlet_gen(io, igen) = (-log(egrid%div)) * &
+                  ( sum(self%platzman_singlet_orbital_gen(io, igen, :)) &
+                  - 0.5*self%platzman_singlet_orbital_gen(io, igen, 1) )
+          else
+             self%yield_ionize_gen(io, igen) = self%yield_ionize_gen(io, igen) + (-log(egrid%div)) * &
+                  ( sum(self%platzman_singlet_orbital_gen(io, igen, :)) &
+                  - 0.5*self%platzman_singlet_orbital_gen(io, igen, 1) )
+             self%yield_singlet_gen(io, igen) = 0.
+          end if
+
+          if (self%energy_triplet(io) < minval(self%energy_ionize)) then
+             self%yield_triplet_gen(io, igen) = (-log(egrid%div)) * &
+                  ( sum(self%platzman_triplet_orbital_gen(io, igen, :)) &
+                  - 0.5*self%platzman_triplet_orbital_gen(io, igen, 1) )
+          else
+             self%yield_ionize_gen(io, igen) = self%yield_ionize_gen(io, igen) + (-log(egrid%div)) * &
+                  ( sum(self%platzman_triplet_orbital_gen(io, igen, :)) &
+               - 0.5*self%platzman_triplet_orbital_gen(io, igen, 1) )
+             self%yield_triplet_gen(io, igen) = 0.
+          end if
+       end do
+    end do
+
     self%total_cross_section_total = self%total_cross_section_ionize + &
          self%total_cross_section_singlet + self%total_cross_section_triplet
 
@@ -563,6 +651,19 @@ contains
     self%gvalue_ionize = 100. * self%yield_ionize/egrid%val_max
     self%gvalue_singlet = 100. * self%yield_singlet/egrid%val_max
     self%gvalue_triplet = 100. * self%yield_triplet/egrid%val_max
+
+    do igen = 1, ngeneration
+       self%yield_ionize_gen(:, igen) = &
+            self%number_electrons * self%number_density * self%yield_ionize_gen(:, igen)
+       self%yield_singlet_gen(:, igen) = &
+            self%number_electrons * self%number_density * self%yield_singlet_gen(: ,igen)
+       self%yield_triplet_gen(:, igen) = &
+            self%number_electrons * self%number_density * self%yield_triplet_gen(:, igen)
+
+       self%gvalue_ionize_gen(:, igen) = 100. * self%yield_ionize_gen(:, igen)/egrid%val_max
+       self%gvalue_singlet_gen(:, igen) = 100. * self%yield_singlet_gen(:, igen)/egrid%val_max
+       self%gvalue_triplet_gen(:, igen) = 100. * self%yield_triplet_gen(:, igen)/egrid%val_max
+    end do
 
   end subroutine calculate_yield
   

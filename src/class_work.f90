@@ -124,7 +124,7 @@ contains
 
        do imedia = 1, self%worker(iwork)%nmedia
           call self%worker(iwork)%medium(imedia)%calculate_yield(self%worker(iwork)%egrid, &
-               self%worker(iwork)%mediamix)
+               self%worker(iwork)%mediamix, self%worker(iwork)%ngeneration)
           total_cross_section_total(imedia,:) = self%worker(iwork)%medium(imedia)%total_cross_section_total
        end do
 
@@ -205,7 +205,7 @@ contains
          close(unit)
          write(unit_stdout, param_orbital)
 
-         worker%medium(imedia) = medium(name, file_medium(imedia), number_density(imedia))
+         worker%medium(imedia) = medium(name, file_medium(imedia), number_density(imedia), worker%ngeneration)
       end do
 
     end subroutine init_medium
@@ -337,6 +337,7 @@ contains
     subroutine print_yield(unit, imedia)
       integer, intent(in) :: unit
       integer, intent(in) :: imedia
+      integer :: igen
 
       write(unit,'("#")')
       write(unit,'("#",a)') ' Yield:'
@@ -362,11 +363,37 @@ contains
 
       write(unit,'("#")')
 
+      write(unit,'("#")')
+      write(unit,'("#",a)') ' Yield per generation:'
+
+      do igen = 1, self%worker(iwork)%ngeneration
+         write(unit,'("#",a,i0)') '  Generation: ', igen
+         do io = 1, self%worker(iwork)%medium(imedia)%number
+            write(unit,'("#",15x,i5,6(8x,f12.4))') io, &
+                 self%worker(iwork)%medium(imedia)%yield_ionize_gen(io, igen), &
+                 self%worker(iwork)%medium(imedia)%yield_singlet_gen(io, igen), &
+                 self%worker(iwork)%medium(imedia)%yield_triplet_gen(io, igen), &
+                 self%worker(iwork)%medium(imedia)%energy_ionize(io), &
+                 self%worker(iwork)%medium(imedia)%energy_singlet(io), &
+                 self%worker(iwork)%medium(imedia)%energy_triplet(io)
+         end do
+
+         if (self%worker(iwork)%medium(imedia)%number > 1) then
+            write(unit,'("#",a20,3(8x,f12.4))') 'sum', &
+                 sum(self%worker(iwork)%medium(imedia)%yield_ionize_gen(:, igen)), &
+                 sum(self%worker(iwork)%medium(imedia)%yield_singlet_gen(:, igen)), &
+                 sum(self%worker(iwork)%medium(imedia)%yield_triplet_gen(:, igen))
+         end if
+
+         write(unit,'("#")')
+      end do
+
     end subroutine print_yield
 
     subroutine print_gvalue(unit, imedia)
       integer, intent(in) :: unit
       integer, intent(in) :: imedia
+      integer :: igen
 
       write(unit,'("#")')
       write(unit,'("#",a)') ' G-value:'
@@ -391,6 +418,31 @@ contains
       end if
 
       write(unit,'("#")')
+
+      write(unit,'("#")')
+      write(unit,'("#",a)') ' G-value per generation:'
+
+      do igen = 1, self%worker(iwork)%ngeneration
+         write(unit,'("#",a,i0)') '  Generation: ', igen
+         do io = 1, self%worker(iwork)%medium(imedia)%number
+            write(unit,'("#",15x,i5,6(8x,f12.4))') io, &
+                 self%worker(iwork)%medium(imedia)%gvalue_ionize_gen(io, igen), &
+                 self%worker(iwork)%medium(imedia)%gvalue_singlet_gen(io, igen), &
+                 self%worker(iwork)%medium(imedia)%gvalue_triplet_gen(io, igen), &
+                 self%worker(iwork)%medium(imedia)%energy_ionize(io), &
+                 self%worker(iwork)%medium(imedia)%energy_singlet(io), &
+                 self%worker(iwork)%medium(imedia)%energy_triplet(io)
+         end do
+
+         if (self%worker(iwork)%medium(imedia)%number > 1) then
+            write(unit,'("#",a20,3(8x,f12.4))') 'sum', &
+                 sum(self%worker(iwork)%medium(imedia)%gvalue_ionize_gen(:, igen)), &
+                 sum(self%worker(iwork)%medium(imedia)%gvalue_singlet_gen(:, igen)), &
+                 sum(self%worker(iwork)%medium(imedia)%gvalue_triplet_gen(:, igen))
+         end if
+
+         write(unit,'("#")')
+      end do
 
     end subroutine print_gvalue
 
